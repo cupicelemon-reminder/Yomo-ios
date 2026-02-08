@@ -10,7 +10,12 @@
       "Bash(security find-identity:*)",
       "Bash(find:*)",
       "Bash(git init:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(cd /Users/mystery/Desktop/YOMO && git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

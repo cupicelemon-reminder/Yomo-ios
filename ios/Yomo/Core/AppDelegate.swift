@@ -8,8 +8,10 @@
 import UIKit
 import FirebaseCore
 import FirebaseAuth
+import FirebaseFirestore
 import FirebaseMessaging
 import GoogleSignIn
+import UserNotifications
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(

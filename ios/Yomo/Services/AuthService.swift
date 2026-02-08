@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import FirebaseCore
 import FirebaseAuth
 import FirebaseFirestore
 import GoogleSignIn
@@ -17,6 +18,7 @@ class AuthService: ObservableObject {
     @Published var error: AuthError?
 
     private let db = Firestore.firestore()
+    private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
 
     enum AuthError: LocalizedError {
         case signInFailed(String)
@@ -39,13 +41,19 @@ class AuthService: ObservableObject {
         self.currentUser = Auth.auth().currentUser
 
         // Listen for auth state changes
-        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+        authStateListenerHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
                 self?.currentUser = user
                 if let user = user {
                     await self?.loadOrCreateUserProfile(for: user)
                 }
             }
+        }
+    }
+
+    deinit {
+        if let handle = authStateListenerHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
         }
     }
 
@@ -170,7 +178,8 @@ class AuthService: ObservableObject {
             // Register device for FCM (will implement in Day 5)
             await registerDevice(userId: user.uid)
 
-        } catch {
+        } catch let error {
+            print("Error loading/creating user profile: \(error.localizedDescription)")
             self.error = .userCreationFailed
         }
     }
