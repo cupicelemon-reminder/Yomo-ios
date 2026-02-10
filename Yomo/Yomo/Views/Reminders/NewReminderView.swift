@@ -23,6 +23,7 @@ struct NewReminderView: View {
     @State private var isParsing = false
     @State private var errorMessage: String?
     @State private var showPaywall = false
+    @State private var debouncedAIParseTask: Task<Void, Never>?
 
     // Advanced recurrence state
     @State private var customInterval: Int = 1
@@ -33,6 +34,9 @@ struct NewReminderView: View {
     @State private var basedOnCompletion: Bool = false
     @StateObject private var speechTranscriber = SpeechTranscriber()
     @State private var isVoicePrefillActive = false
+    @State private var shouldParseOnVoiceStop = false
+    @State private var isHoldingParse = false
+    @State private var holdToTalkWorkItem: DispatchWorkItem?
     @State private var showSpeechPermissionAlert = false
     @State private var speechPermissionMessage: String = ""
 
@@ -93,13 +97,64 @@ struct NewReminderView: View {
         .sheet(isPresented: $showPaywall) {
             PaywallView()
         }
+        .onChange(of: naturalInput) { newValue in
+            // Live typing updates should not fight voice prefilling.
+            guard !isVoicePrefillActive else { return }
+
+            // Immediate local parse keeps UI responsive.
+            let local = AIParsingService.shared.parseLocally(newValue)
+            applyParsedReminder(local)
+
+            // Debounced AI parse (best effort). This is intentionally quiet (no spinner).
+            debouncedAIParseTask?.cancel()
+            let snapshot = newValue
+            debouncedAIParseTask = Task {
+                try? await Task.sleep(nanoseconds: 900_000_000)
+                guard !Task.isCancelled else { return }
+
+                let trimmed = snapshot.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard trimmed.count >= 4 else { return }
+
+                let parsed = await AIParsingService.shared.parseNaturalLanguage(trimmed)
+                    ?? AIParsingService.shared.parseLocally(trimmed)
+
+                await MainActor.run {
+                    // Apply only if the user hasn't changed the input since the task started.
+                    guard naturalInput == snapshot else { return }
+                    guard !isVoicePrefillActive else { return }
+                    applyParsedReminder(parsed)
+                }
+            }
+        }
         .onChange(of: speechTranscriber.transcript) { newValue in
             if isVoicePrefillActive {
                 naturalInput = newValue
             }
         }
+        .onChange(of: speechTranscriber.isRecording) { isRecording in
+            // When recording stops (manual release, silence auto-stop, or recognizer final),
+            // parse exactly once if this recording session requested it.
+            guard !isRecording else { return }
+
+            if shouldParseOnVoiceStop {
+                shouldParseOnVoiceStop = false
+                isVoicePrefillActive = false
+
+                let trimmed = naturalInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty {
+                    parseInput()
+                }
+            } else {
+                isVoicePrefillActive = false
+            }
+        }
         .onDisappear {
             isVoicePrefillActive = false
+            shouldParseOnVoiceStop = false
+            holdToTalkWorkItem?.cancel()
+            holdToTalkWorkItem = nil
+            debouncedAIParseTask?.cancel()
+            debouncedAIParseTask = nil
             speechTranscriber.stopTranscribing()
         }
         .alert("Voice Input", isPresented: $showSpeechPermissionAlert) {
@@ -123,16 +178,6 @@ struct NewReminderView: View {
                     .font(.bodyRegular)
                     .foregroundColor(.textPrimary)
                     .lineLimit(1...3)
-
-                    Button {
-                        toggleVoiceInput()
-                    } label: {
-                        Image(systemName: speechTranscriber.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundColor(speechTranscriber.isRecording ? .dangerRed : .brandBlue)
-                            .accessibilityLabel(speechTranscriber.isRecording ? "Stop voice input" : "Start voice input")
-                    }
-                    .buttonStyle(.plain)
                 }
             }
 
@@ -144,17 +189,74 @@ struct NewReminderView: View {
 
             HStack {
                 Spacer()
-                PillButton(
-                    isParsing ? "Parsing..." : "Parse",
-                    isActive: true,
-                    icon: "sparkles"
-                ) {
-                    parseInput()
-                }
-                .disabled(isParsing || naturalInput.isEmpty)
+                holdToTalkParseButton
                 Spacer()
             }
+
+            Text("Tip: tap to parse. Press and hold to talk, release to stop and parse.")
+                .font(.bodySmall)
+                .foregroundColor(.textTertiary)
         }
+    }
+
+    private var holdToTalkParseButton: some View {
+        let trimmed = naturalInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        let canTapParse = !isParsing && !trimmed.isEmpty
+
+        let title: String = if speechTranscriber.isRecording {
+            "Release to Stop"
+        } else if isParsing {
+            "Parsing..."
+        } else {
+            "Parse"
+        }
+
+        let icon: String = speechTranscriber.isRecording ? "waveform" : "sparkles"
+        let fill: Color = speechTranscriber.isRecording ? .dangerRed : .brandBlue
+
+        return HStack(spacing: Spacing.xs) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .semibold))
+            Text(title)
+                .font(.pillLabel)
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, Spacing.md)
+        .frame(height: 36)
+        .background(
+            Capsule()
+                .fill(fill)
+        )
+        .opacity((canTapParse || speechTranscriber.isRecording) ? 1 : 0.55)
+        .contentShape(Capsule())
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    guard !speechTranscriber.isRecording else { return }
+                    guard holdToTalkWorkItem == nil else { return }
+
+                    isHoldingParse = true
+                    let work = DispatchWorkItem { startVoiceFromHoldIfNeeded() }
+                    holdToTalkWorkItem = work
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
+                }
+                .onEnded { _ in
+                    let wasRecording = speechTranscriber.isRecording
+                    isHoldingParse = false
+
+                    holdToTalkWorkItem?.cancel()
+                    holdToTalkWorkItem = nil
+
+                    if wasRecording {
+                        speechTranscriber.stopTranscribing()
+                    } else if canTapParse {
+                        parseInput()
+                    }
+                }
+        )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(speechTranscriber.isRecording ? "Stop voice input" : "Parse")
+        .accessibilityHint("Tap to parse typed text. Press and hold to speak, release to stop and parse.")
     }
 
     // MARK: - Divider
@@ -253,19 +355,13 @@ struct NewReminderView: View {
 
     // MARK: - Actions
 
-    private func toggleVoiceInput() {
+    private func startVoiceFromHoldIfNeeded() {
+        guard isHoldingParse else { return }
+        guard !speechTranscriber.isRecording else { return }
+
         HapticManager.light()
-
-        if speechTranscriber.isRecording {
-            speechTranscriber.stopTranscribing()
-            isVoicePrefillActive = false
-
-            // Auto-parse after voice capture ends.
-            if !naturalInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                parseInput()
-            }
-            return
-        }
+        debouncedAIParseTask?.cancel()
+        debouncedAIParseTask = nil
 
         Task {
             let ok = await speechTranscriber.requestPermissionsIfNeeded()
@@ -279,6 +375,7 @@ struct NewReminderView: View {
             }
 
             await MainActor.run {
+                shouldParseOnVoiceStop = true
                 isVoicePrefillActive = true
                 speechTranscriber.startTranscribing()
             }
@@ -286,52 +383,60 @@ struct NewReminderView: View {
     }
 
     private func parseInput() {
-        guard !naturalInput.isEmpty else { return }
+        let trimmed = naturalInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
         isParsing = true
         HapticManager.light()
 
+        debouncedAIParseTask?.cancel()
+        debouncedAIParseTask = nil
+
         Task {
-            let result = await AIParsingService.shared.parseNaturalLanguage(naturalInput)
+            let result = await AIParsingService.shared.parseNaturalLanguage(trimmed)
 
             await MainActor.run {
                 if let parsed = result {
-                    title = parsed.title
-
-                    if let parsedDate = parsed.date {
-                        date = parsedDate
-                    }
-
-                    if let parsedTime = parsed.time {
-                        time = parsedTime
-                    }
-
-                    switch parsed.recurrenceType {
-                    case "daily": selectedRecurrence = .daily
-                    case "weekly": selectedRecurrence = .weekly
-                    case "custom": selectedRecurrence = .custom
-                    default: selectedRecurrence = .none
-                    }
-
-                    if let days = parsed.daysOfWeek {
-                        let dayMap = ["sun": 1, "mon": 2, "tue": 3, "wed": 4, "thu": 5, "fri": 6, "sat": 7]
-                        customDaysOfWeek = days.compactMap { dayMap[$0.lowercased()] }
-                    }
-
-                    if let interval = parsed.recurrenceInterval {
-                        customInterval = interval
-                    }
-                    if let unit = parsed.recurrenceUnit {
-                        switch unit {
-                        case "hour": customUnit = .hour
-                        case "day": customUnit = .day
-                        case "week": customUnit = .week
-                        case "month": customUnit = .month
-                        default: break
-                        }
-                    }
+                    applyParsedReminder(parsed)
                 }
                 isParsing = false
                 HapticManager.success()
+            }
+        }
+    }
+
+    private func applyParsedReminder(_ parsed: ParsedReminder) {
+        title = parsed.title
+
+        if let parsedDate = parsed.date {
+            date = parsedDate
+        }
+
+        if let parsedTime = parsed.time {
+            time = parsedTime
+        }
+
+        switch parsed.recurrenceType {
+        case "daily": selectedRecurrence = .daily
+        case "weekly": selectedRecurrence = .weekly
+        case "custom": selectedRecurrence = .custom
+        default: selectedRecurrence = .none
+        }
+
+        if let days = parsed.daysOfWeek {
+            let dayMap = ["sun": 1, "mon": 2, "tue": 3, "wed": 4, "thu": 5, "fri": 6, "sat": 7]
+            customDaysOfWeek = days.compactMap { dayMap[$0.lowercased()] }
+        }
+
+        if let interval = parsed.recurrenceInterval {
+            customInterval = interval
+        }
+        if let unit = parsed.recurrenceUnit {
+            switch unit {
+            case "hour": customUnit = .hour
+            case "day": customUnit = .day
+            case "week": customUnit = .week
+            case "month": customUnit = .month
+            default: break
             }
         }
     }
@@ -415,6 +520,8 @@ final class SpeechTranscriber: NSObject, ObservableObject {
     private var audioEngine: AVAudioEngine?
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
+    private var silenceWorkItem: DispatchWorkItem?
+    private let silenceTimeout: TimeInterval = 1.4
 
     private(set) var lastErrorMessage: String?
 
@@ -457,6 +564,8 @@ final class SpeechTranscriber: NSObject, ObservableObject {
         transcript = ""
         lastErrorMessage = nil
         isRecording = true
+        silenceWorkItem?.cancel()
+        silenceWorkItem = nil
 
         let audioEngine = AVAudioEngine()
         self.audioEngine = audioEngine
@@ -497,6 +606,7 @@ final class SpeechTranscriber: NSObject, ObservableObject {
             Task { @MainActor in
                 if let result {
                     self.transcript = result.bestTranscription.formattedString
+                    self.resetSilenceAutoStop()
                 }
 
                 if error != nil || (result?.isFinal ?? false) {
@@ -508,6 +618,9 @@ final class SpeechTranscriber: NSObject, ObservableObject {
 
     func stopTranscribing() {
         guard isRecording else { return }
+
+        silenceWorkItem?.cancel()
+        silenceWorkItem = nil
 
         isRecording = false
 
@@ -521,5 +634,25 @@ final class SpeechTranscriber: NSObject, ObservableObject {
         audioEngine = nil
 
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    private func resetSilenceAutoStop() {
+        silenceWorkItem?.cancel()
+
+        let snapshot = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !snapshot.isEmpty else { return }
+
+        let item = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            guard self.isRecording else { return }
+
+            let current = self.transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard current == snapshot else { return }
+
+            self.stopTranscribing()
+        }
+
+        silenceWorkItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + silenceTimeout, execute: item)
     }
 }
