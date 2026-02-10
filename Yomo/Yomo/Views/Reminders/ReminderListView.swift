@@ -52,6 +52,12 @@ struct ReminderListView: View {
         .onDisappear {
             viewModel.stopListening()
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            // Reload in case the notification extension snoozed/completed while in background
+            if viewModel.isLocalMode {
+                LocalReminderStore.shared.reloadFromDisk()
+            }
+        }
         .sheet(isPresented: $showNewReminder) {
             NewReminderView()
         }

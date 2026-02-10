@@ -114,17 +114,20 @@ class ReminderViewModel: ObservableObject {
         let calendar = Calendar.current
         let now = Date()
 
-        overdueReminders = reminders.filter { $0.isOverdue }
+        // Sort by displayDate ascending (closest to now first)
+        let sorted = reminders.sorted { $0.displayDate < $1.displayDate }
 
-        todayReminders = reminders.filter { reminder in
+        overdueReminders = sorted.filter { $0.isOverdue }
+
+        todayReminders = sorted.filter { reminder in
             !reminder.isOverdue && calendar.isDateInToday(reminder.displayDate)
         }
 
-        tomorrowReminders = reminders.filter { reminder in
+        tomorrowReminders = sorted.filter { reminder in
             !reminder.isOverdue && calendar.isDateInTomorrow(reminder.displayDate)
         }
 
-        thisWeekReminders = reminders.filter { reminder in
+        thisWeekReminders = sorted.filter { reminder in
             guard !reminder.isOverdue,
                   !calendar.isDateInToday(reminder.displayDate),
                   !calendar.isDateInTomorrow(reminder.displayDate) else { return false }
@@ -135,7 +138,7 @@ class ReminderViewModel: ObservableObject {
             return reminder.displayDate > now && reminder.displayDate < weekEnd
         }
 
-        laterReminders = reminders.filter { reminder in
+        laterReminders = sorted.filter { reminder in
             guard !reminder.isOverdue,
                   !calendar.isDateInToday(reminder.displayDate),
                   !calendar.isDateInTomorrow(reminder.displayDate) else { return false }

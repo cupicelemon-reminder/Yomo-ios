@@ -14,7 +14,12 @@ final class LocalReminderStore {
     private let storageKey = "yomo_local_reminders"
     private var changeCallbacks: [([Reminder]) -> Void] = []
 
-    private init() {}
+    /// Shared App Group container so the notification content extension can also read/write
+    private let defaults: UserDefaults
+
+    private init() {
+        defaults = UserDefaults(suiteName: Constants.appGroupId) ?? UserDefaults.standard
+    }
 
     // MARK: - DTO for JSON serialization
     // Firebase Timestamp and @DocumentID don't work with JSONEncoder/JSONDecoder,
@@ -207,24 +212,41 @@ final class LocalReminderStore {
         changeCallbacks.removeAll()
     }
 
+    /// Re-read data from App Group storage and notify listeners.
+    /// Call this when returning to foreground, since the notification extension
+    /// may have snoozed/completed reminders while the app was in background.
+    func reloadFromDisk() {
+        notifyChange()
+    }
+
     // MARK: - Data migration
 
-    /// Clears corrupted data from pre-DTO storage format and resets seed flag
+    /// Migrates from UserDefaults.standard to App Group, and clears corrupted pre-DTO data
     func migrateIfNeeded() {
-        let migrationKey = "yomo_dto_migration_v1"
-        guard !UserDefaults.standard.bool(forKey: migrationKey) else { return }
+        let migrationKey = "yomo_appgroup_migration_v2"
+        guard !defaults.bool(forKey: migrationKey) else { return }
 
-        // Clear old data that was encoded with Firebase Timestamp (can't decode with DTO)
-        UserDefaults.standard.removeObject(forKey: storageKey)
+        // Move valid DTO data from standard to App Group (if any exists from v1 migration)
+        if let existingData = UserDefaults.standard.data(forKey: storageKey),
+           let _ = try? JSONDecoder().decode([ReminderDTO].self, from: existingData) {
+            defaults.set(existingData, forKey: storageKey)
+            UserDefaults.standard.removeObject(forKey: storageKey)
+        } else {
+            // Clear any corrupted data
+            defaults.removeObject(forKey: storageKey)
+            UserDefaults.standard.removeObject(forKey: storageKey)
+        }
+
+        defaults.removeObject(forKey: "yomo_samples_seeded")
         UserDefaults.standard.removeObject(forKey: "yomo_samples_seeded")
-        UserDefaults.standard.set(true, forKey: migrationKey)
+        defaults.set(true, forKey: migrationKey)
     }
 
     // MARK: - Sample reminders for first launch
 
     func seedSampleRemindersIfNeeded() {
         let seededKey = "yomo_samples_seeded"
-        guard !UserDefaults.standard.bool(forKey: seededKey) else { return }
+        guard !defaults.bool(forKey: seededKey) else { return }
 
         let calendar = Calendar.current
         let now = Date()
@@ -248,13 +270,13 @@ final class LocalReminderStore {
             createReminder(sample)
         }
 
-        UserDefaults.standard.set(true, forKey: seededKey)
+        defaults.set(true, forKey: seededKey)
     }
 
     // MARK: - Persistence (using DTO to avoid Firebase type issues)
 
     private func loadReminders() -> [Reminder] {
-        guard let data = UserDefaults.standard.data(forKey: storageKey) else {
+        guard let data = defaults.data(forKey: storageKey) else {
             return []
         }
         let decoder = JSONDecoder()
@@ -268,7 +290,7 @@ final class LocalReminderStore {
         let dtos = reminders.map { ReminderDTO(from: $0) }
         let encoder = JSONEncoder()
         if let data = try? encoder.encode(dtos) {
-            UserDefaults.standard.set(data, forKey: storageKey)
+            defaults.set(data, forKey: storageKey)
         }
     }
 

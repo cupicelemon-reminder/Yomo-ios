@@ -3,6 +3,8 @@
 //  YomoNotificationContent
 //
 //  Custom notification content extension with snooze slider (Screen 8)
+//  Shows when user long-presses a Yomo notification.
+//  Handles snooze/complete WITHOUT opening the app.
 //
 
 import UIKit
@@ -11,14 +13,14 @@ import UserNotificationsUI
 
 class NotificationViewController: UIViewController, UNNotificationContentExtension {
 
-    // Storyboard outlet (required by MainInterface.storyboard connection)
-    @IBOutlet weak var label: UILabel!
-
     // MARK: - UI Elements
+    private let bellIcon = UIImageView()
     private let titleLabel = UILabel()
     private let snoozeLabel = UILabel()
     private let minutesLabel = UILabel()
     private let slider = UISlider()
+    private let minLabel = UILabel()
+    private let maxLabel = UILabel()
     private let snoozeButton = UIButton(type: .system)
     private let completeButton = UIButton(type: .system)
 
@@ -26,14 +28,19 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
     private var reminderTitle: String = ""
     private var snoozeMinutes: Int = 15
 
+    private let appGroupId = "group.com.binye.Yomo"
+
     // MARK: - Colors (matching design tokens)
     private let brandBlue = UIColor(red: 74/255, green: 144/255, blue: 217/255, alpha: 1)
     private let checkGold = UIColor(red: 245/255, green: 166/255, blue: 35/255, alpha: 1)
+    private let goldBg = UIColor(red: 255/255, green: 245/255, blue: 224/255, alpha: 1)
     private let textPrimary = UIColor(red: 26/255, green: 26/255, blue: 46/255, alpha: 1)
     private let textSecondary = UIColor(red: 142/255, green: 142/255, blue: 147/255, alpha: 1)
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .white
+        preferredContentSize = CGSize(width: view.bounds.width, height: 280)
         setupUI()
     }
 
@@ -52,23 +59,18 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
         _ response: UNNotificationResponse,
         completionHandler completion: @escaping (UNNotificationContentExtensionResponseOption) -> Void
     ) {
-        switch response.actionIdentifier {
-        case "YOMO_COMPLETE":
-            completion(.dismissAndForwardAction)
-        case "YOMO_SNOOZE_5", "YOMO_SNOOZE_15", "YOMO_SNOOZE_30":
-            completion(.dismissAndForwardAction)
-        case "YOMO_CUSTOM_SNOOZE":
-            completion(.doNotDismiss)
-        default:
-            completion(.dismissAndForwardAction)
-        }
+        // No external actions - all handled by in-extension buttons
+        completion(.dismiss)
     }
 
     // MARK: - UI Setup
 
     private func setupUI() {
-        view.backgroundColor = .white
-        preferredContentSize = CGSize(width: view.bounds.width, height: 200)
+        // Bell icon
+        let bellConfig = UIImage.SymbolConfiguration(pointSize: 24, weight: .regular)
+        bellIcon.image = UIImage(systemName: "bell.fill", withConfiguration: bellConfig)
+        bellIcon.tintColor = brandBlue
+        bellIcon.contentMode = .scaleAspectFit
 
         // Title
         titleLabel.font = .systemFont(ofSize: 17, weight: .semibold)
@@ -83,7 +85,7 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
         snoozeLabel.textAlignment = .center
 
         // Minutes display
-        minutesLabel.font = .systemFont(ofSize: 32, weight: .bold)
+        minutesLabel.font = .monospacedDigitSystemFont(ofSize: 32, weight: .bold)
         minutesLabel.textColor = brandBlue
         minutesLabel.textAlignment = .center
         updateMinutesLabel()
@@ -93,51 +95,82 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
         slider.maximumValue = 60
         slider.value = 15
         slider.tintColor = brandBlue
+        slider.isUserInteractionEnabled = true
         slider.addTarget(self, action: #selector(sliderChanged), for: .valueChanged)
 
+        // Min/max labels
+        minLabel.text = "1 min"
+        minLabel.font = .systemFont(ofSize: 11)
+        minLabel.textColor = textSecondary
+
+        maxLabel.text = "60 min"
+        maxLabel.font = .systemFont(ofSize: 11)
+        maxLabel.textColor = textSecondary
+        maxLabel.textAlignment = .right
+
         // Snooze button
-        snoozeButton.setTitle("Snooze", for: .normal)
-        snoozeButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
+        snoozeButton.setTitle("  Snooze", for: .normal)
+        snoozeButton.setImage(UIImage(systemName: "clock.arrow.circlepath"), for: .normal)
+        snoozeButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
         snoozeButton.backgroundColor = brandBlue
         snoozeButton.setTitleColor(.white, for: .normal)
-        snoozeButton.layer.cornerRadius = 12
+        snoozeButton.tintColor = .white
+        snoozeButton.layer.cornerRadius = 14
+        snoozeButton.clipsToBounds = true
         snoozeButton.addTarget(self, action: #selector(snoozeTapped), for: .touchUpInside)
 
         // Complete button
-        completeButton.setTitle("Complete", for: .normal)
-        completeButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
-        completeButton.backgroundColor = UIColor(red: 255/255, green: 245/255, blue: 224/255, alpha: 1)
+        completeButton.setTitle("  Done", for: .normal)
+        completeButton.setImage(UIImage(systemName: "checkmark"), for: .normal)
+        completeButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
+        completeButton.backgroundColor = goldBg
         completeButton.setTitleColor(checkGold, for: .normal)
-        completeButton.layer.cornerRadius = 12
+        completeButton.tintColor = checkGold
+        completeButton.layer.cornerRadius = 14
+        completeButton.clipsToBounds = true
         completeButton.addTarget(self, action: #selector(completeTapped), for: .touchUpInside)
 
-        // Layout
-        let stack = UIStackView(arrangedSubviews: [
-            titleLabel, snoozeLabel, minutesLabel, slider
-        ])
-        stack.axis = .vertical
-        stack.spacing = 8
-        stack.alignment = .fill
+        // -- Layout with auto layout --
 
+        // Header: bell + title
+        let headerStack = UIStackView(arrangedSubviews: [bellIcon, titleLabel])
+        headerStack.axis = .vertical
+        headerStack.spacing = 4
+        headerStack.alignment = .center
+
+        // Slider row with min/max labels
+        let sliderRangeStack = UIStackView(arrangedSubviews: [minLabel, maxLabel])
+        sliderRangeStack.axis = .horizontal
+        sliderRangeStack.distribution = .equalSpacing
+
+        // Snooze controls
+        let snoozeStack = UIStackView(arrangedSubviews: [snoozeLabel, minutesLabel, slider, sliderRangeStack])
+        snoozeStack.axis = .vertical
+        snoozeStack.spacing = 4
+        snoozeStack.alignment = .fill
+
+        // Buttons
         let buttonStack = UIStackView(arrangedSubviews: [snoozeButton, completeButton])
         buttonStack.axis = .horizontal
         buttonStack.spacing = 12
         buttonStack.distribution = .fillEqually
 
-        let mainStack = UIStackView(arrangedSubviews: [stack, buttonStack])
+        // Main stack
+        let mainStack = UIStackView(arrangedSubviews: [headerStack, snoozeStack, buttonStack])
         mainStack.axis = .vertical
-        mainStack.spacing = 16
+        mainStack.spacing = 12
 
         mainStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(mainStack)
 
         NSLayoutConstraint.activate([
             mainStack.topAnchor.constraint(equalTo: view.topAnchor, constant: 16),
-            mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            mainStack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -16),
-            snoozeButton.heightAnchor.constraint(equalToConstant: 44),
-            completeButton.heightAnchor.constraint(equalToConstant: 44)
+            mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            mainStack.bottomAnchor.constraint(lessThanOrEqualTo: view.bottomAnchor, constant: -16),
+            bellIcon.heightAnchor.constraint(equalToConstant: 28),
+            snoozeButton.heightAnchor.constraint(equalToConstant: 48),
+            completeButton.heightAnchor.constraint(equalToConstant: 48)
         ])
     }
 
@@ -149,20 +182,17 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
     }
 
     @objc private func snoozeTapped() {
-        // Write snooze info via App Group UserDefaults
-        if let defaults = UserDefaults(suiteName: "group.com.binye.Yomo") {
-            defaults.set(reminderId, forKey: "pendingSnoozeReminderId")
-            defaults.set(reminderTitle, forKey: "pendingSnoozeTitle")
-            defaults.set(snoozeMinutes, forKey: "pendingSnoozeMinutes")
-            defaults.synchronize()
-        }
+        // Cancel the current notification
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [reminderId])
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [reminderId])
 
-        // Schedule a local notification for the snooze
+        // Schedule a new notification for after the snooze
         let content = UNMutableNotificationContent()
         content.title = "Yomo"
         content.body = reminderTitle
         content.sound = .default
         content.userInfo = ["reminderId": reminderId, "title": reminderTitle]
+        content.categoryIdentifier = "YOMO_REMINDER_FREE"
 
         let trigger = UNTimeIntervalNotificationTrigger(
             timeInterval: TimeInterval(snoozeMinutes * 60),
@@ -177,20 +207,118 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
 
         UNUserNotificationCenter.current().add(request)
 
+        // Update the reminder's snoozedUntil in shared storage
+        let snoozeDate = Date().addingTimeInterval(TimeInterval(snoozeMinutes * 60))
+        updateReminderSnooze(reminderId: reminderId, snoozeDate: snoozeDate)
+
+        // Dismiss notification WITHOUT opening the app
         extensionContext?.dismissNotificationContentExtension()
     }
 
     @objc private func completeTapped() {
-        if let defaults = UserDefaults(suiteName: "group.com.binye.Yomo") {
-            defaults.set(reminderId, forKey: "pendingCompleteReminderId")
-            defaults.synchronize()
-        }
-
+        // Cancel notification
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [reminderId])
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [reminderId])
+
+        // Mark complete in shared storage
+        completeReminderInStore(reminderId: reminderId)
+
+        // Dismiss notification WITHOUT opening the app
         extensionContext?.dismissNotificationContentExtension()
     }
 
     private func updateMinutesLabel() {
         minutesLabel.text = "\(snoozeMinutes) min"
+    }
+
+    // MARK: - Shared Storage (App Group)
+
+    private func updateReminderSnooze(reminderId: String, snoozeDate: Date) {
+        guard let defaults = UserDefaults(suiteName: appGroupId),
+              var dtos = loadDTOs(from: defaults) else { return }
+
+        if let index = dtos.firstIndex(where: { $0.id == reminderId }) {
+            dtos[index].snoozedUntil = snoozeDate.timeIntervalSince1970
+            dtos[index].updatedAt = Date().timeIntervalSince1970
+            saveDTOs(dtos, to: defaults)
+        }
+    }
+
+    private func completeReminderInStore(reminderId: String) {
+        guard let defaults = UserDefaults(suiteName: appGroupId),
+              var dtos = loadDTOs(from: defaults) else { return }
+
+        if let index = dtos.firstIndex(where: { $0.id == reminderId }) {
+            let dto = dtos[index]
+            if let recurrenceType = dto.recurrenceType, recurrenceType != "none" {
+                // Recurring: advance to next date
+                let triggerDate = Date(timeIntervalSince1970: dto.triggerDate)
+                let interval = dto.recurrenceInterval ?? 1
+                let unit = dto.recurrenceUnit ?? "day"
+                let nextDate = calculateNextDate(from: triggerDate, interval: interval, unit: unit)
+                dtos[index].triggerDate = nextDate.timeIntervalSince1970
+                dtos[index].snoozedUntil = nil
+                dtos[index].updatedAt = Date().timeIntervalSince1970
+            } else {
+                dtos[index].status = "completed"
+                dtos[index].updatedAt = Date().timeIntervalSince1970
+            }
+            saveDTOs(dtos, to: defaults)
+        }
+    }
+
+    // MARK: - DTO matching LocalReminderStore format
+
+    private struct ReminderDTO: Codable {
+        var id: String
+        var title: String
+        var notes: String?
+        var triggerDate: Double
+        var recurrenceType: String?
+        var recurrenceInterval: Int?
+        var recurrenceUnit: String?
+        var recurrenceDaysOfWeek: [Int]?
+        var recurrenceTimeRangeStart: String?
+        var recurrenceTimeRangeEnd: String?
+        var recurrenceBasedOnCompletion: Bool?
+        var status: String
+        var snoozedUntil: Double?
+        var createdAt: Double
+        var updatedAt: Double
+    }
+
+    private let storageKey = "yomo_local_reminders"
+
+    private func loadDTOs(from defaults: UserDefaults) -> [ReminderDTO]? {
+        guard let data = defaults.data(forKey: storageKey) else { return nil }
+        return try? JSONDecoder().decode([ReminderDTO].self, from: data)
+    }
+
+    private func saveDTOs(_ dtos: [ReminderDTO], to defaults: UserDefaults) {
+        if let data = try? JSONEncoder().encode(dtos) {
+            defaults.set(data, forKey: storageKey)
+            defaults.synchronize()
+        }
+    }
+
+    private func calculateNextDate(from date: Date, interval: Int, unit: String) -> Date {
+        let calendar = Calendar.current
+        let now = Date()
+        var nextDate = date
+
+        let component: Calendar.Component = {
+            switch unit {
+            case "hour": return .hour
+            case "week": return .weekOfYear
+            case "month": return .month
+            default: return .day
+            }
+        }()
+
+        while nextDate <= now {
+            nextDate = calendar.date(byAdding: component, value: interval, to: nextDate) ?? nextDate
+        }
+
+        return nextDate
     }
 }
