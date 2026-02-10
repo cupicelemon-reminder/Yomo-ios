@@ -251,6 +251,7 @@ final class LocalReminderStore {
         // Make seeding idempotent even if called multiple times during startup.
         // If we already have reminders (or a concurrent call is in progress), don't add duplicates.
         if !loadReminders().isEmpty {
+            dedupeSampleRemindersIfNeeded()
             defaults.set(true, forKey: seededKey)
             return
         }
@@ -279,6 +280,31 @@ final class LocalReminderStore {
         for sample in samples {
             createReminder(sample)
         }
+    }
+
+    /// If sample reminders got duplicated (e.g. from an earlier seeding race), keep only one per sample title.
+    private func dedupeSampleRemindersIfNeeded() {
+        let sampleTitles: Set<String> = [
+            "Welcome to Yomo! Tap me to complete",
+            "Swipe left on a reminder to delete it",
+            "Try the + button to create your own",
+        ]
+
+        var reminders = loadReminders()
+        var seen: Set<String> = []
+        let beforeCount = reminders.count
+
+        // Keep the first occurrence of each sample title; remove subsequent duplicates.
+        reminders.removeAll { reminder in
+            guard sampleTitles.contains(reminder.title) else { return false }
+            if seen.contains(reminder.title) { return true }
+            seen.insert(reminder.title)
+            return false
+        }
+
+        guard reminders.count != beforeCount else { return }
+        saveReminders(reminders)
+        notifyChange()
     }
 
     // MARK: - Persistence (using DTO to avoid Firebase type issues)
