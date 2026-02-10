@@ -53,14 +53,15 @@ class ReminderService {
             throw ReminderError.notAuthenticated
         }
 
+        // MVP: Avoid composite index requirement (status + triggerDate).
+        // We'll fetch ordered reminders and filter status client-side.
         let snapshot = try await ref
-            .whereField("status", isEqualTo: ReminderStatus.active.rawValue)
             .order(by: "triggerDate", descending: false)
             .getDocuments()
 
-        return snapshot.documents.compactMap { doc in
-            decodeReminder(from: doc)
-        }
+        return snapshot.documents
+            .compactMap { doc in decodeReminder(from: doc) }
+            .filter { $0.status == .active }
     }
 
     // MARK: - Real-time listener
@@ -70,13 +71,12 @@ class ReminderService {
         guard let ref = remindersRef else { return nil }
 
         return ref
-            .whereField("status", isEqualTo: ReminderStatus.active.rawValue)
             .order(by: "triggerDate", descending: false)
             .addSnapshotListener { snapshot, error in
                 guard let documents = snapshot?.documents else { return }
-                let reminders = documents.compactMap { doc in
-                    self.decodeReminder(from: doc)
-                }
+                let reminders = documents
+                    .compactMap { doc in self.decodeReminder(from: doc) }
+                    .filter { $0.status == .active }
                 onChange(reminders)
             }
     }
