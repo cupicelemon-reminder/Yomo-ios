@@ -75,10 +75,6 @@ struct ContentView: View {
         .task {
             await SubscriptionService.shared.checkSubscriptionStatus()
             await DeviceSyncService.shared.refreshFCMToken()
-            await MainActor.run {
-                NotificationService.shared.clearBadge()
-            }
         }
     }
 }
-

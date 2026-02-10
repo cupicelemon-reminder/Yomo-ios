@@ -50,6 +50,7 @@ class ReminderViewModel: ObservableObject {
                     self?.reminders = reminders
                     self?.groupReminders(reminders)
                     self?.isLoading = false
+                    NotificationService.shared.setBadgeCount(self?.overdueReminders.count ?? 0)
                     await NotificationService.shared.syncAllNotifications(reminders: reminders)
                 }
             }
@@ -59,6 +60,7 @@ class ReminderViewModel: ObservableObject {
                     self?.reminders = reminders
                     self?.groupReminders(reminders)
                     self?.isLoading = false
+                    NotificationService.shared.setBadgeCount(self?.overdueReminders.count ?? 0)
                     await NotificationService.shared.syncAllNotifications(reminders: reminders)
                 }
             }

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 import UserNotifications
 import FirebaseFirestore
 
@@ -203,8 +204,12 @@ final class NotificationService {
     // MARK: - Badge Management
 
     @MainActor
-    func clearBadge() {
-        UNUserNotificationCenter.current().setBadgeCount(0)
+    func setBadgeCount(_ count: Int) {
+        if #available(iOS 16.0, *) {
+            UNUserNotificationCenter.current().setBadgeCount(count)
+        } else {
+            UIApplication.shared.applicationIconBadgeNumber = count
+        }
     }
 }
 

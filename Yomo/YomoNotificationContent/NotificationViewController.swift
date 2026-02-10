@@ -191,6 +191,7 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
         content.title = "Yomo"
         content.body = reminderTitle
         content.sound = .default
+        content.badge = 1
         content.userInfo = ["reminderId": reminderId, "title": reminderTitle]
         content.categoryIdentifier = "YOMO_REMINDER_FREE"
 
@@ -211,6 +212,8 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
         let snoozeDate = Date().addingTimeInterval(TimeInterval(snoozeMinutes * 60))
         updateReminderSnooze(reminderId: reminderId, snoozeDate: snoozeDate)
 
+        updateAppBadgeFromStore()
+
         // Dismiss notification WITHOUT opening the app
         extensionContext?.dismissNotificationContentExtension()
     }
@@ -222,6 +225,8 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
 
         // Mark complete in shared storage
         completeReminderInStore(reminderId: reminderId)
+
+        updateAppBadgeFromStore()
 
         // Dismiss notification WITHOUT opening the app
         extensionContext?.dismissNotificationContentExtension()
@@ -298,6 +303,29 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
         if let data = try? JSONEncoder().encode(dtos) {
             defaults.set(data, forKey: storageKey)
             defaults.synchronize()
+        }
+    }
+
+    private func updateAppBadgeFromStore() {
+        guard let defaults = UserDefaults(suiteName: appGroupId),
+              let dtos = loadDTOs(from: defaults) else {
+            setAppBadge(0)
+            return
+        }
+
+        let now = Date().timeIntervalSince1970
+        let overdueCount = dtos.filter { dto in
+            guard dto.status == "active" else { return false }
+            let display = dto.snoozedUntil ?? dto.triggerDate
+            return display < now
+        }.count
+
+        setAppBadge(overdueCount)
+    }
+
+    private func setAppBadge(_ count: Int) {
+        if #available(iOSApplicationExtension 16.0, *) {
+            UNUserNotificationCenter.current().setBadgeCount(count)
         }
     }
 
