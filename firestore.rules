@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can only access their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Reminders subcollection
+      match /reminders/{reminderId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Devices subcollection
+      match /devices/{deviceId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Subscription subcollection
+      match /subscription/{doc} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        // Only Cloud Functions can write subscription data
+        allow write: if false;
+      }
+    }
+  }
+}

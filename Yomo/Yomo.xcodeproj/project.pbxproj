@@ -1,0 +1,885 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AADA55E42F386E770068C469 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AADA55E32F386E770068C469 /* FirebaseAuth */; };
+		AADA55E62F386E770068C469 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = AADA55E52F386E770068C469 /* FirebaseFirestore */; };
+		AADA55E82F386E770068C469 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = AADA55E72F386E770068C469 /* FirebaseMessaging */; };
+		AADA55EB2F386EE20068C469 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = AADA55EA2F386EE20068C469 /* GoogleSignIn */; };
+		AADA55ED2F386EE20068C469 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = AADA55EC2F386EE20068C469 /* GoogleSignInSwift */; };
+		AADA560C2F3A77BE0068C469 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = AADA560B2F3A77BE0068C469 /* RevenueCat */; };
+		AADA560E2F3A77BE0068C469 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = AADA560D2F3A77BE0068C469 /* RevenueCatUI */; };
+		AADA569F2F3A9D340068C469 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AADA569E2F3A9D340068C469 /* UserNotifications.framework */; };
+		AADA56A12F3A9D340068C469 /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AADA56A02F3A9D340068C469 /* UserNotificationsUI.framework */; };
+		AADA56AB2F3A9D340068C469 /* YomoNotificationContent.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AADA569C2F3A9D340068C469 /* YomoNotificationContent.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AADA55372F386C1A0068C469 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AADA55212F386C180068C469 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AADA55282F386C180068C469;
+			remoteInfo = Yomo;
+		};
+		AADA55412F386C1A0068C469 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AADA55212F386C180068C469 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AADA55282F386C180068C469;
+			remoteInfo = Yomo;
+		};
+		AADA56A92F3A9D340068C469 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AADA55212F386C180068C469 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AADA569B2F3A9D340068C469;
+			remoteInfo = YomoNotificationContent;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AADA56B02F3A9D340068C469 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AADA56AB2F3A9D340068C469 /* YomoNotificationContent.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		AADA55292F386C180068C469 /* Yomo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yomo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AADA55362F386C1A0068C469 /* YomoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YomoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AADA55402F386C1A0068C469 /* YomoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YomoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AADA569C2F3A9D340068C469 /* YomoNotificationContent.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = YomoNotificationContent.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		AADA569E2F3A9D340068C469 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
+		AADA56A02F3A9D340068C469 /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AADA55A42F386CF20068C469 /* Exceptions for "Yomo" folder in "YomoTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Core/AppDelegate.swift,
+				Core/AppState.swift,
+				Core/Constants.swift,
+				Models/Reminder.swift,
+				Models/User.swift,
+				"Resources/GoogleService-Info.plist",
+				Services/AuthService.swift,
+				Utilities/DesignTokens.swift,
+				Utilities/HapticManager.swift,
+				ViewModels/AuthViewModel.swift,
+				Views/Authentication/WelcomeView.swift,
+				Views/Components/GlassCard.swift,
+				YomoApp.swift,
+			);
+			target = AADA55352F386C1A0068C469 /* YomoTests */;
+		};
+		AADA55A52F386CF20068C469 /* Exceptions for "Yomo" folder in "YomoUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Core/AppDelegate.swift,
+				Core/AppState.swift,
+				Core/Constants.swift,
+				Models/Reminder.swift,
+				Models/User.swift,
+				"Resources/GoogleService-Info.plist",
+				Services/AuthService.swift,
+				Utilities/DesignTokens.swift,
+				Utilities/HapticManager.swift,
+				ViewModels/AuthViewModel.swift,
+				Views/Authentication/WelcomeView.swift,
+				Views/Components/GlassCard.swift,
+				YomoApp.swift,
+			);
+			target = AADA553F2F386C1A0068C469 /* YomoUITests */;
+		};
+		AADA56AF2F3A9D340068C469 /* Exceptions for "YomoNotificationContent" folder in "YomoNotificationContent" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AADA569B2F3A9D340068C469 /* YomoNotificationContent */;
+		};
+		AADA56B22F3ABDCD0068C469 /* Exceptions for "Yomo" folder in "Yomo" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AADA55282F386C180068C469 /* Yomo */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		AADA552B2F386C180068C469 /* Yomo */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AADA56B22F3ABDCD0068C469 /* Exceptions for "Yomo" folder in "Yomo" target */,
+				AADA55A42F386CF20068C469 /* Exceptions for "Yomo" folder in "YomoTests" target */,
+				AADA55A52F386CF20068C469 /* Exceptions for "Yomo" folder in "YomoUITests" target */,
+			);
+			path = Yomo;
+			sourceTree = "<group>";
+		};
+		AADA55392F386C1A0068C469 /* YomoTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = YomoTests;
+			sourceTree = "<group>";
+		};
+		AADA55432F386C1A0068C469 /* YomoUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = YomoUITests;
+			sourceTree = "<group>";
+		};
+		AADA56A22F3A9D340068C469 /* YomoNotificationContent */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AADA56AF2F3A9D340068C469 /* Exceptions for "YomoNotificationContent" folder in "YomoNotificationContent" target */,
+			);
+			path = YomoNotificationContent;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AADA55262F386C180068C469 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AADA55ED2F386EE20068C469 /* GoogleSignInSwift in Frameworks */,
+				AADA55E82F386E770068C469 /* FirebaseMessaging in Frameworks */,
+				AADA560E2F3A77BE0068C469 /* RevenueCatUI in Frameworks */,
+				AADA560C2F3A77BE0068C469 /* RevenueCat in Frameworks */,
+				AADA55EB2F386EE20068C469 /* GoogleSignIn in Frameworks */,
+				AADA55E42F386E770068C469 /* FirebaseAuth in Frameworks */,
+				AADA55E62F386E770068C469 /* FirebaseFirestore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AADA55332F386C1A0068C469 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AADA553D2F386C1A0068C469 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AADA56992F3A9D340068C469 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AADA56A12F3A9D340068C469 /* UserNotificationsUI.framework in Frameworks */,
+				AADA569F2F3A9D340068C469 /* UserNotifications.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AADA55202F386C180068C469 = {
+			isa = PBXGroup;
+			children = (
+				AADA552B2F386C180068C469 /* Yomo */,
+				AADA55392F386C1A0068C469 /* YomoTests */,
+				AADA55432F386C1A0068C469 /* YomoUITests */,
+				AADA56A22F3A9D340068C469 /* YomoNotificationContent */,
+				AADA569D2F3A9D340068C469 /* Frameworks */,
+				AADA552A2F386C180068C469 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AADA552A2F386C180068C469 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AADA55292F386C180068C469 /* Yomo.app */,
+				AADA55362F386C1A0068C469 /* YomoTests.xctest */,
+				AADA55402F386C1A0068C469 /* YomoUITests.xctest */,
+				AADA569C2F3A9D340068C469 /* YomoNotificationContent.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AADA569D2F3A9D340068C469 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				AADA569E2F3A9D340068C469 /* UserNotifications.framework */,
+				AADA56A02F3A9D340068C469 /* UserNotificationsUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AADA55282F386C180068C469 /* Yomo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AADA554A2F386C1A0068C469 /* Build configuration list for PBXNativeTarget "Yomo" */;
+			buildPhases = (
+				AADA55252F386C180068C469 /* Sources */,
+				AADA55262F386C180068C469 /* Frameworks */,
+				AADA55272F386C180068C469 /* Resources */,
+				AADA56B02F3A9D340068C469 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AADA56AA2F3A9D340068C469 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AADA552B2F386C180068C469 /* Yomo */,
+			);
+			name = Yomo;
+			packageProductDependencies = (
+				AADA55E32F386E770068C469 /* FirebaseAuth */,
+				AADA55E52F386E770068C469 /* FirebaseFirestore */,
+				AADA55E72F386E770068C469 /* FirebaseMessaging */,
+				AADA55EA2F386EE20068C469 /* GoogleSignIn */,
+				AADA55EC2F386EE20068C469 /* GoogleSignInSwift */,
+				AADA560B2F3A77BE0068C469 /* RevenueCat */,
+				AADA560D2F3A77BE0068C469 /* RevenueCatUI */,
+			);
+			productName = Yomo;
+			productReference = AADA55292F386C180068C469 /* Yomo.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AADA55352F386C1A0068C469 /* YomoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AADA554D2F386C1A0068C469 /* Build configuration list for PBXNativeTarget "YomoTests" */;
+			buildPhases = (
+				AADA55322F386C1A0068C469 /* Sources */,
+				AADA55332F386C1A0068C469 /* Frameworks */,
+				AADA55342F386C1A0068C469 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AADA55382F386C1A0068C469 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AADA55392F386C1A0068C469 /* YomoTests */,
+			);
+			name = YomoTests;
+			packageProductDependencies = (
+			);
+			productName = YomoTests;
+			productReference = AADA55362F386C1A0068C469 /* YomoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		AADA553F2F386C1A0068C469 /* YomoUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AADA55502F386C1A0068C469 /* Build configuration list for PBXNativeTarget "YomoUITests" */;
+			buildPhases = (
+				AADA553C2F386C1A0068C469 /* Sources */,
+				AADA553D2F386C1A0068C469 /* Frameworks */,
+				AADA553E2F386C1A0068C469 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AADA55422F386C1A0068C469 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AADA55432F386C1A0068C469 /* YomoUITests */,
+			);
+			name = YomoUITests;
+			packageProductDependencies = (
+			);
+			productName = YomoUITests;
+			productReference = AADA55402F386C1A0068C469 /* YomoUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		AADA569B2F3A9D340068C469 /* YomoNotificationContent */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AADA56AC2F3A9D340068C469 /* Build configuration list for PBXNativeTarget "YomoNotificationContent" */;
+			buildPhases = (
+				AADA56982F3A9D340068C469 /* Sources */,
+				AADA56992F3A9D340068C469 /* Frameworks */,
+				AADA569A2F3A9D340068C469 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AADA56A22F3A9D340068C469 /* YomoNotificationContent */,
+			);
+			name = YomoNotificationContent;
+			packageProductDependencies = (
+			);
+			productName = YomoNotificationContent;
+			productReference = AADA569C2F3A9D340068C469 /* YomoNotificationContent.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AADA55212F386C180068C469 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					AADA55282F386C180068C469 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					AADA55352F386C1A0068C469 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = AADA55282F386C180068C469;
+					};
+					AADA553F2F386C1A0068C469 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = AADA55282F386C180068C469;
+					};
+					AADA569B2F3A9D340068C469 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+				};
+			};
+			buildConfigurationList = AADA55242F386C180068C469 /* Build configuration list for PBXProject "Yomo" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AADA55202F386C180068C469;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AADA55E22F386E770068C469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				AADA55E92F386EE20068C469 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				AADA560A2F3A77BE0068C469 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = AADA552A2F386C180068C469 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AADA55282F386C180068C469 /* Yomo */,
+				AADA55352F386C1A0068C469 /* YomoTests */,
+				AADA553F2F386C1A0068C469 /* YomoUITests */,
+				AADA569B2F3A9D340068C469 /* YomoNotificationContent */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AADA55272F386C180068C469 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AADA55342F386C1A0068C469 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AADA553E2F386C1A0068C469 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AADA569A2F3A9D340068C469 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AADA55252F386C180068C469 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AADA55322F386C1A0068C469 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AADA553C2F386C1A0068C469 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AADA56982F3A9D340068C469 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AADA55382F386C1A0068C469 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AADA55282F386C180068C469 /* Yomo */;
+			targetProxy = AADA55372F386C1A0068C469 /* PBXContainerItemProxy */;
+		};
+		AADA55422F386C1A0068C469 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AADA55282F386C180068C469 /* Yomo */;
+			targetProxy = AADA55412F386C1A0068C469 /* PBXContainerItemProxy */;
+		};
+		AADA56AA2F3A9D340068C469 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AADA569B2F3A9D340068C469 /* YomoNotificationContent */;
+			targetProxy = AADA56A92F3A9D340068C469 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		AADA55482F386C1A0068C469 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 7433A2X247;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AADA55492F386C1A0068C469 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 7433A2X247;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AADA554B2F386C1A0068C469 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Yomo/Yomo.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7433A2X247;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Yomo/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.binye.Yomo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AADA554C2F386C1A0068C469 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Yomo/Yomo.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7433A2X247;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Yomo/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.binye.Yomo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		AADA554E2F386C1A0068C469 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7433A2X247;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yomo.YomoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Yomo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Yomo";
+			};
+			name = Debug;
+		};
+		AADA554F2F386C1A0068C469 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7433A2X247;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yomo.YomoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Yomo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Yomo";
+			};
+			name = Release;
+		};
+		AADA55512F386C1A0068C469 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7433A2X247;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yomo.YomoUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Yomo;
+			};
+			name = Debug;
+		};
+		AADA55522F386C1A0068C469 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7433A2X247;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yomo.YomoUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Yomo;
+			};
+			name = Release;
+		};
+		AADA56AD2F3A9D340068C469 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = YomoNotificationContent/YomoNotificationContent.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7433A2X247;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YomoNotificationContent/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = YomoNotificationContent;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.binye.Yomo.YomoNotificationContent;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AADA56AE2F3A9D340068C469 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = YomoNotificationContent/YomoNotificationContent.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7433A2X247;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YomoNotificationContent/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = YomoNotificationContent;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.binye.Yomo.YomoNotificationContent;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AADA55242F386C180068C469 /* Build configuration list for PBXProject "Yomo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AADA55482F386C1A0068C469 /* Debug */,
+				AADA55492F386C1A0068C469 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AADA554A2F386C1A0068C469 /* Build configuration list for PBXNativeTarget "Yomo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AADA554B2F386C1A0068C469 /* Debug */,
+				AADA554C2F386C1A0068C469 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AADA554D2F386C1A0068C469 /* Build configuration list for PBXNativeTarget "YomoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AADA554E2F386C1A0068C469 /* Debug */,
+				AADA554F2F386C1A0068C469 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AADA55502F386C1A0068C469 /* Build configuration list for PBXNativeTarget "YomoUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AADA55512F386C1A0068C469 /* Debug */,
+				AADA55522F386C1A0068C469 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AADA56AC2F3A9D340068C469 /* Build configuration list for PBXNativeTarget "YomoNotificationContent" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AADA56AD2F3A9D340068C469 /* Debug */,
+				AADA56AE2F3A9D340068C469 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AADA55E22F386E770068C469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.9.0;
+			};
+		};
+		AADA55E92F386EE20068C469 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.1.0;
+			};
+		};
+		AADA560A2F3A77BE0068C469 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.58.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AADA55E32F386E770068C469 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AADA55E22F386E770068C469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		AADA55E52F386E770068C469 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AADA55E22F386E770068C469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		AADA55E72F386E770068C469 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AADA55E22F386E770068C469 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+		AADA55EA2F386EE20068C469 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AADA55E92F386EE20068C469 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		AADA55EC2F386EE20068C469 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AADA55E92F386EE20068C469 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+		AADA560B2F3A77BE0068C469 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AADA560A2F3A77BE0068C469 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+		AADA560D2F3A77BE0068C469 /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AADA560A2F3A77BE0068C469 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = AADA55212F386C180068C469 /* Project object */;
+}

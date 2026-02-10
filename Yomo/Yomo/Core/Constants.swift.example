@@ -1,0 +1,36 @@
+//
+//  Constants.swift
+//  Yomo
+//
+//  Created by Claude on 2026-02-08.
+//
+
+import Foundation
+
+enum Constants {
+    // MARK: - App Configuration
+    static let bundleId = "com.binye.Yomo"
+    static let appGroupId = "group.com.binye.Yomo"
+    static let notificationCategoryId = "YOMO_REMINDER"
+
+    // MARK: - Firebase
+    static let firebaseProjectId = "yomo-6340e"
+
+    // MARK: - RevenueCat
+    // Keep this empty in the public repo; set locally for testing.
+    static let revenueCatAPIKey = ""
+
+    // MARK: - AI Services
+    static let claudeAPIKey = "" // TODO: Add Anthropic API key
+    static let openaiAPIKey = "" // TODO: Add OpenAI API key
+
+    // MARK: - Notification Limits
+    static let maxPendingNotifications = 64
+
+    // MARK: - Pro Features
+    enum ProFeatures {
+        static let customRecurrence = true
+        static let customSnooze = false // Free feature
+        static let aiParsing = false // Free feature with limits
+    }
+}
