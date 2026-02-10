@@ -2,10 +2,11 @@
 //  ReminderViewModel.swift
 //  Yomo
 //
-//  View model for reminder list with real-time Firestore sync
+//  View model for reminder list with real-time Firestore sync or local storage
 //
 
 import Foundation
+import FirebaseAuth
 import FirebaseFirestore
 import Combine
 
@@ -23,22 +24,39 @@ class ReminderViewModel: ObservableObject {
     @Published var laterReminders: [Reminder] = []
 
     private let service = ReminderService()
+    private let localStore = LocalReminderStore.shared
     private var listener: ListenerRegistration?
 
     var isEmpty: Bool {
         reminders.isEmpty
     }
 
+    /// Whether we're using local-only mode (dev login / free tier / no Firebase Auth)
+    var isLocalMode: Bool {
+        Auth.auth().currentUser == nil
+    }
+
     func startListening() {
         isLoading = true
-        listener = service.listenToReminders { [weak self] reminders in
-            Task { @MainActor in
-                self?.reminders = reminders
-                self?.groupReminders(reminders)
-                self?.isLoading = false
 
-                // Sync notifications with current reminders
-                await NotificationService.shared.syncAllNotifications(reminders: reminders)
+        if isLocalMode {
+            localStore.seedSampleRemindersIfNeeded()
+            localStore.addChangeListener { [weak self] reminders in
+                Task { @MainActor in
+                    self?.reminders = reminders
+                    self?.groupReminders(reminders)
+                    self?.isLoading = false
+                    await NotificationService.shared.syncAllNotifications(reminders: reminders)
+                }
+            }
+        } else {
+            listener = service.listenToReminders { [weak self] reminders in
+                Task { @MainActor in
+                    self?.reminders = reminders
+                    self?.groupReminders(reminders)
+                    self?.isLoading = false
+                    await NotificationService.shared.syncAllNotifications(reminders: reminders)
+                }
             }
         }
     }
@@ -46,31 +64,47 @@ class ReminderViewModel: ObservableObject {
     func stopListening() {
         listener?.remove()
         listener = nil
+        localStore.removeAllListeners()
     }
 
     func completeReminder(_ reminder: Reminder) {
-        Task {
-            do {
-                try await service.completeReminder(reminder)
-                if let reminderId = reminder.id {
-                    NotificationService.shared.cancelNotification(for: reminderId)
+        if isLocalMode {
+            localStore.completeReminder(reminder)
+            if let reminderId = reminder.id {
+                NotificationService.shared.cancelNotification(for: reminderId)
+            }
+            HapticManager.success()
+        } else {
+            Task {
+                do {
+                    try await service.completeReminder(reminder)
+                    if let reminderId = reminder.id {
+                        NotificationService.shared.cancelNotification(for: reminderId)
+                    }
+                    HapticManager.success()
+                } catch {
+                    errorMessage = error.localizedDescription
                 }
-                HapticManager.success()
-            } catch {
-                errorMessage = error.localizedDescription
             }
         }
     }
 
     func deleteReminder(_ reminder: Reminder) {
-        Task {
-            do {
-                try await service.deleteReminder(reminder)
-                if let reminderId = reminder.id {
-                    NotificationService.shared.cancelNotification(for: reminderId)
+        if isLocalMode {
+            localStore.deleteReminder(reminder)
+            if let reminderId = reminder.id {
+                NotificationService.shared.cancelNotification(for: reminderId)
+            }
+        } else {
+            Task {
+                do {
+                    try await service.deleteReminder(reminder)
+                    if let reminderId = reminder.id {
+                        NotificationService.shared.cancelNotification(for: reminderId)
+                    }
+                } catch {
+                    errorMessage = error.localizedDescription
                 }
-            } catch {
-                errorMessage = error.localizedDescription
             }
         }
     }

@@ -12,8 +12,15 @@ import FirebaseFirestore
 class ReminderService {
     private let db = Firestore.firestore()
 
+    /// Cached dev user ID for when Firebase Auth is unavailable (Dev Login)
+    private var devUserId: String?
+
+    func setDevUserId(_ id: String?) {
+        devUserId = id
+    }
+
     private var userId: String? {
-        Auth.auth().currentUser?.uid
+        Auth.auth().currentUser?.uid ?? devUserId
     }
 
     private var remindersRef: CollectionReference? {

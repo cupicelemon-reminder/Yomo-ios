@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 import FirebaseFirestore
 
 struct NewReminderView: View {
@@ -290,15 +291,22 @@ struct NewReminderView: View {
             recurrence: recurrence
         )
 
-        Task {
-            do {
-                let service = ReminderService()
-                try await service.createReminder(reminder)
-                HapticManager.success()
-                dismiss()
-            } catch {
-                errorMessage = error.localizedDescription
-                isSaving = false
+        // Use local store if no Firebase Auth (dev login / free tier)
+        if FirebaseAuth.Auth.auth().currentUser == nil {
+            LocalReminderStore.shared.createReminder(reminder)
+            HapticManager.success()
+            dismiss()
+        } else {
+            Task {
+                do {
+                    let service = ReminderService()
+                    try await service.createReminder(reminder)
+                    HapticManager.success()
+                    dismiss()
+                } catch {
+                    errorMessage = error.localizedDescription
+                    isSaving = false
+                }
             }
         }
     }

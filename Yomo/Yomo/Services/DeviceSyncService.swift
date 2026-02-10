@@ -85,7 +85,7 @@ final class DeviceSyncService {
                     content.sound = .default
                     content.userInfo = ["reminderId": reminderId, "title": title]
 
-                    let isPro = AppState.shared.isPro
+                    let isPro = await AppState.shared.isPro
                     content.categoryIdentifier = isPro
                         ? NotificationCategory.reminderPro
                         : NotificationCategory.reminderFree

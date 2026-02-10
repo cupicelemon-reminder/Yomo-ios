@@ -7,21 +7,38 @@
 
 import SwiftUI
 
-struct AuthButton: View {
-    let icon: String
+struct AuthButton<Icon: View>: View {
     let title: String
     let action: () -> Void
-    var isSystemIcon: Bool = true
+    let iconView: Icon
+
+    init(
+        icon: String,
+        title: String,
+        action: @escaping () -> Void
+    ) where Icon == Image {
+        self.title = title
+        self.action = action
+        self.iconView = Image(systemName: icon)
+    }
+
+    init(
+        title: String,
+        action: @escaping () -> Void,
+        @ViewBuilder icon: () -> Icon
+    ) {
+        self.title = title
+        self.action = action
+        self.iconView = icon()
+    }
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: Spacing.md) {
-                if isSystemIcon {
-                    Image(systemName: icon)
-                        .font(.system(size: 20))
-                        .foregroundColor(.textSecondary)
-                        .frame(width: 24, height: 24)
-                }
+                iconView
+                    .font(.system(size: 20))
+                    .foregroundColor(.textSecondary)
+                    .frame(width: 24, height: 24)
 
                 Text(title)
                     .font(.bodyRegular)
@@ -42,5 +59,25 @@ struct AuthButton: View {
             )
             .glassCardShadow()
         }
+    }
+}
+
+// MARK: - Google Logo
+struct GoogleLogo: View {
+    var body: some View {
+        Text("G")
+            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.26, green: 0.52, blue: 0.96), // Blue
+                        Color(red: 0.86, green: 0.27, blue: 0.22), // Red
+                        Color(red: 0.96, green: 0.73, blue: 0.18), // Yellow
+                        Color(red: 0.20, green: 0.66, blue: 0.33)  // Green
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
     }
 }

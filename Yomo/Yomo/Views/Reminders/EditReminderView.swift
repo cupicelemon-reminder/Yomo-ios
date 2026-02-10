@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 import FirebaseFirestore
 
 struct EditReminderView: View {
@@ -227,30 +228,44 @@ struct EditReminderView: View {
             updatedAt: Timestamp(date: Date())
         )
 
-        Task {
-            do {
-                let service = ReminderService()
-                try await service.updateReminder(updated)
-                HapticManager.success()
-                dismiss()
-            } catch {
-                errorMessage = error.localizedDescription
-                isSaving = false
+        if Auth.auth().currentUser == nil {
+            LocalReminderStore.shared.updateReminder(updated)
+            HapticManager.success()
+            dismiss()
+        } else {
+            Task {
+                do {
+                    let service = ReminderService()
+                    try await service.updateReminder(updated)
+                    HapticManager.success()
+                    dismiss()
+                } catch {
+                    errorMessage = error.localizedDescription
+                    isSaving = false
+                }
             }
         }
     }
 
     private func deleteReminder() {
-        Task {
-            do {
-                let service = ReminderService()
-                try await service.deleteReminder(reminder)
-                if let reminderId = reminder.id {
-                    NotificationService.shared.cancelNotification(for: reminderId)
+        if Auth.auth().currentUser == nil {
+            LocalReminderStore.shared.deleteReminder(reminder)
+            if let reminderId = reminder.id {
+                NotificationService.shared.cancelNotification(for: reminderId)
+            }
+            dismiss()
+        } else {
+            Task {
+                do {
+                    let service = ReminderService()
+                    try await service.deleteReminder(reminder)
+                    if let reminderId = reminder.id {
+                        NotificationService.shared.cancelNotification(for: reminderId)
+                    }
+                    dismiss()
+                } catch {
+                    errorMessage = error.localizedDescription
                 }
-                dismiss()
-            } catch {
-                errorMessage = error.localizedDescription
             }
         }
     }
@@ -282,7 +297,7 @@ struct EditReminderView: View {
 
 // MARK: - Make Reminder identifiable for sheet binding
 
-extension Reminder: @retroactive Hashable {
+extension Reminder: Hashable {
     static func == (lhs: Reminder, rhs: Reminder) -> Bool {
         lhs.id == rhs.id
     }

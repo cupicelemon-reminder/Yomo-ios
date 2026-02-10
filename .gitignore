@@ -49,10 +49,36 @@ Temporary Items
 # API Keys & Secrets (DO NOT COMMIT)
 **/Constants.swift
 GoogleService-Info.plist
+google-services.json
 *.p8
 *.p12
 *.pem
 .secrets/
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Android (Kotlin/Gradle)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab
+
+# Cloud Functions
+cloud-functions/node_modules/
+
+# RevenueCat SDK docs (not source code)
+RevenuecatSDK-android/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
 
 # Temporary files
 *.swp

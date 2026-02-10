@@ -10,6 +10,7 @@ import SwiftUI
 struct WelcomeView: View {
     @StateObject private var viewModel = AuthViewModel()
     @State private var animateContent = false
+    @State private var logoFloat = false
 
     var body: some View {
         ZStack {
@@ -19,21 +20,26 @@ struct WelcomeView: View {
                 Spacer()
 
                 // Logo + Tagline
-                VStack(spacing: Spacing.md) {
+                VStack(spacing: Spacing.lg) {
                     Image("logo-nobg")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 120, height: 120)
-                        .scaleEffect(animateContent ? 1 : 0.7)
+                        .frame(width: 180, height: 180)
+                        .scaleEffect(animateContent ? 1 : 0.5)
                         .opacity(animateContent ? 1 : 0)
+                        .offset(y: logoFloat ? -6 : 6)
+                        .animation(
+                            .easeInOut(duration: 2.5).repeatForever(autoreverses: true),
+                            value: logoFloat
+                        )
 
-                    VStack(spacing: Spacing.xs) {
+                    VStack(spacing: Spacing.sm) {
                         Text("Your moment.")
-                            .font(.titleLarge)
+                            .font(.custom("Noteworthy-Bold", size: 30))
                             .foregroundColor(.textPrimary)
 
                         Text("Don't miss it.")
-                            .font(.bodyRegular)
+                            .font(.custom("Noteworthy-Light", size: 20))
                             .foregroundColor(.textSecondary)
                     }
                     .opacity(animateContent ? 1 : 0)
@@ -46,11 +52,10 @@ struct WelcomeView: View {
                 // Auth Buttons
                 VStack(spacing: Spacing.md) {
                     AuthButton(
-                        icon: "envelope.fill",
-                        title: "Continue with Google"
-                    ) {
-                        viewModel.signInWithGoogle()
-                    }
+                        title: "Continue with Google",
+                        action: { viewModel.signInWithGoogle() },
+                        icon: { GoogleLogo() }
+                    )
 
                     AuthButton(
                         icon: "phone.fill",
@@ -58,6 +63,19 @@ struct WelcomeView: View {
                     ) {
                         viewModel.showPhoneInput = true
                     }
+
+                    #if DEBUG
+                    Button(action: { viewModel.devLogin() }) {
+                        HStack(spacing: Spacing.sm) {
+                            Image(systemName: "hammer.fill")
+                                .font(.system(size: 14))
+                            Text("Dev Login (Skip Auth)")
+                                .font(.bodySmall)
+                        }
+                        .foregroundColor(.textTertiary)
+                        .padding(.vertical, Spacing.xs)
+                    }
+                    #endif
                 }
                 .padding(.horizontal, Spacing.xl)
                 .opacity(animateContent ? 1 : 0)
@@ -106,14 +124,56 @@ struct WelcomeView: View {
             withAnimation(.easeOut(duration: 0.8)) {
                 animateContent = true
             }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                logoFloat = true
+            }
         }
     }
 }
 
-// MARK: - Phone Input Sheet
+// MARK: - Country Code Data
+private struct CountryCode: Identifiable {
+    let id = UUID()
+    let flag: String
+    let name: String
+    let code: String
+}
+
+private let popularCountryCodes: [CountryCode] = [
+    CountryCode(flag: "🇺🇸", name: "United States", code: "+1"),
+    CountryCode(flag: "🇨🇳", name: "China", code: "+86"),
+    CountryCode(flag: "🇬🇧", name: "United Kingdom", code: "+44"),
+    CountryCode(flag: "🇯🇵", name: "Japan", code: "+81"),
+    CountryCode(flag: "🇰🇷", name: "South Korea", code: "+82"),
+    CountryCode(flag: "🇩🇪", name: "Germany", code: "+49"),
+    CountryCode(flag: "🇫🇷", name: "France", code: "+33"),
+    CountryCode(flag: "🇮🇳", name: "India", code: "+91"),
+    CountryCode(flag: "🇧🇷", name: "Brazil", code: "+55"),
+    CountryCode(flag: "🇦🇺", name: "Australia", code: "+61"),
+    CountryCode(flag: "🇨🇦", name: "Canada", code: "+1"),
+    CountryCode(flag: "🇲🇽", name: "Mexico", code: "+52"),
+    CountryCode(flag: "🇸🇬", name: "Singapore", code: "+65"),
+    CountryCode(flag: "🇭🇰", name: "Hong Kong", code: "+852"),
+    CountryCode(flag: "🇹🇼", name: "Taiwan", code: "+886"),
+    CountryCode(flag: "🇮🇹", name: "Italy", code: "+39"),
+    CountryCode(flag: "🇪🇸", name: "Spain", code: "+34"),
+    CountryCode(flag: "🇳🇱", name: "Netherlands", code: "+31"),
+    CountryCode(flag: "🇷🇺", name: "Russia", code: "+7"),
+    CountryCode(flag: "🇹🇭", name: "Thailand", code: "+66"),
+    CountryCode(flag: "🇵🇭", name: "Philippines", code: "+63"),
+    CountryCode(flag: "🇮🇩", name: "Indonesia", code: "+62"),
+    CountryCode(flag: "🇻🇳", name: "Vietnam", code: "+84"),
+    CountryCode(flag: "🇲🇾", name: "Malaysia", code: "+60"),
+    CountryCode(flag: "🇳🇿", name: "New Zealand", code: "+64"),
+]
+
+// MARK: - Phone Input Sheet with Country Code Picker
 struct PhoneInputSheet: View {
     @ObservedObject var viewModel: AuthViewModel
     @Environment(\.dismiss) var dismiss
+    @State private var selectedCountry = popularCountryCodes[0]
+    @State private var showCountryPicker = false
+    @State private var localNumber = ""
 
     var body: some View {
         NavigationView {
@@ -122,22 +182,48 @@ struct PhoneInputSheet: View {
                     .font(.titleMedium)
                     .foregroundColor(.textPrimary)
 
-                TextField("+1 (555) 123-4567", text: $viewModel.phoneNumber)
-                    .keyboardType(.phonePad)
-                    .font(.bodyRegular)
-                    .padding(.horizontal, Spacing.md)
-                    .padding(.vertical, Spacing.sm + 2)
-                    .background(
-                        RoundedRectangle(cornerRadius: CornerRadius.sm + 2)
-                            .fill(Color.brandBlueBg)
-                    )
-                    .padding(.horizontal, Spacing.lg)
+                HStack(spacing: Spacing.sm) {
+                    // Country code button
+                    Button {
+                        showCountryPicker = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(selectedCountry.flag)
+                                .font(.system(size: 20))
+                            Text(selectedCountry.code)
+                                .font(.bodyRegular)
+                                .foregroundColor(.textPrimary)
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.textTertiary)
+                        }
+                        .padding(.horizontal, Spacing.sm + 2)
+                        .padding(.vertical, Spacing.sm + 2)
+                        .background(
+                            RoundedRectangle(cornerRadius: CornerRadius.sm + 2)
+                                .fill(Color.brandBlueBg)
+                        )
+                    }
+
+                    // Phone number input
+                    TextField("Phone number", text: $localNumber)
+                        .keyboardType(.phonePad)
+                        .font(.bodyRegular)
+                        .padding(.horizontal, Spacing.md)
+                        .padding(.vertical, Spacing.sm + 2)
+                        .background(
+                            RoundedRectangle(cornerRadius: CornerRadius.sm + 2)
+                                .fill(Color.brandBlueBg)
+                        )
+                }
+                .padding(.horizontal, Spacing.lg)
 
                 PrimaryButton(
                     "Send Code",
                     isLoading: viewModel.isLoading,
-                    isDisabled: viewModel.phoneNumber.isEmpty
+                    isDisabled: localNumber.isEmpty
                 ) {
+                    viewModel.phoneNumber = selectedCountry.code + localNumber
                     viewModel.startPhoneAuth()
                 }
                 .padding(.horizontal, Spacing.lg)
@@ -146,6 +232,64 @@ struct PhoneInputSheet: View {
             }
             .padding(.top, Spacing.xl)
             .navigationBarItems(trailing: Button("Cancel") { dismiss() })
+            .sheet(isPresented: $showCountryPicker) {
+                CountryPickerSheet(
+                    selectedCountry: $selectedCountry,
+                    isPresented: $showCountryPicker
+                )
+            }
+        }
+    }
+}
+
+// MARK: - Country Picker Sheet
+private struct CountryPickerSheet: View {
+    @Binding var selectedCountry: CountryCode
+    @Binding var isPresented: Bool
+    @State private var searchText = ""
+
+    private var filteredCountries: [CountryCode] {
+        if searchText.isEmpty { return popularCountryCodes }
+        let query = searchText.lowercased()
+        return popularCountryCodes.filter {
+            $0.name.lowercased().contains(query) || $0.code.contains(query)
+        }
+    }
+
+    var body: some View {
+        NavigationView {
+            List(filteredCountries) { country in
+                Button {
+                    selectedCountry = country
+                    isPresented = false
+                } label: {
+                    HStack {
+                        Text(country.flag)
+                            .font(.system(size: 24))
+                        Text(country.name)
+                            .font(.bodyRegular)
+                            .foregroundColor(.textPrimary)
+                        Spacer()
+                        Text(country.code)
+                            .font(.bodyRegular)
+                            .foregroundColor(.textSecondary)
+                        if country.code == selectedCountry.code && country.name == selectedCountry.name {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.brandBlue)
+                                .font(.system(size: 14, weight: .semibold))
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+            .searchable(text: $searchText, prompt: "Search country")
+            .navigationTitle("Select Country")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { isPresented = false }
+                }
+            }
         }
     }
 }

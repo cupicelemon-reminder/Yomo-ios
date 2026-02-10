@@ -117,7 +117,7 @@ final class NotificationService {
         }
 
         // Set category based on Pro status
-        let isPro = AppState.shared.isPro
+        let isPro = await AppState.shared.isPro
         content.categoryIdentifier = isPro
             ? NotificationCategory.reminderPro
             : NotificationCategory.reminderFree
@@ -175,7 +175,7 @@ final class NotificationService {
             "title": title
         ]
 
-        let isPro = AppState.shared.isPro
+        let isPro = await AppState.shared.isPro
         content.categoryIdentifier = isPro
             ? NotificationCategory.reminderPro
             : NotificationCategory.reminderFree
@@ -251,15 +251,9 @@ enum NotificationAction {
 
 // MARK: - Firebase Auth Helper
 
-enum FirebaseAuthHelper {
-    static var currentUserId: String? {
-        FirebaseAuth.currentUserId
-    }
-}
-
 import FirebaseAuth
 
-private extension FirebaseAuth {
+enum FirebaseAuthHelper {
     static var currentUserId: String? {
         Auth.auth().currentUser?.uid
     }

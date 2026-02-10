@@ -7,6 +7,7 @@
 
 import Foundation
 import FirebaseAuth
+import FirebaseFirestore
 
 @MainActor
 class AuthViewModel: ObservableObject {
@@ -91,4 +92,19 @@ class AuthViewModel: ObservableObject {
             errorMessage = "Failed to sign out"
         }
     }
+
+    #if DEBUG
+    /// Skip auth entirely — directly set AppState to navigate past login
+    func devLogin() {
+        let profile = UserProfile(
+            id: "dev-tester-\(UUID().uuidString.prefix(8))",
+            displayName: "Dev Tester",
+            email: "dev@yomo.test",
+            photoURL: nil,
+            createdAt: FirebaseFirestore.Timestamp(date: Date())
+        )
+        AppState.shared.updateUser(profile)
+        isAuthenticated = true
+    }
+    #endif
 }

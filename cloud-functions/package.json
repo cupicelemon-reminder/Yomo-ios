@@ -2,7 +2,7 @@
   "name": "yomo-cloud-functions",
   "description": "Yomo Firebase Cloud Functions for cross-device sync",
   "engines": {
-    "node": "18"
+    "node": "20"
   },
   "main": "index.js",
   "dependencies": {

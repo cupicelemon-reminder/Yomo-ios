@@ -25,12 +25,57 @@ final class AIParsingService {
     // MARK: - Parse Input
 
     func parseNaturalLanguage(_ input: String) async -> ParsedReminder? {
-        // Try Claude API first, fall back to OpenAI, then local parsing
-        if !Constants.claudeAPIKey.isEmpty {
+        // Priority: OpenRouter > Claude direct > OpenAI direct > local fallback
+        if !Constants.openRouterAPIKey.isEmpty {
+            return await parseWithOpenRouter(input)
+        } else if !Constants.claudeAPIKey.isEmpty {
             return await parseWithClaude(input)
         } else if !Constants.openaiAPIKey.isEmpty {
             return await parseWithOpenAI(input)
         } else {
+            return parseLocally(input)
+        }
+    }
+
+    // MARK: - OpenRouter API (primary)
+
+    private func parseWithOpenRouter(_ input: String) async -> ParsedReminder? {
+        let prompt = buildPrompt(input)
+
+        var request = URLRequest(url: URL(string: "https://openrouter.ai/api/v1/chat/completions")!)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(Constants.openRouterAPIKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("Yomo/1.0", forHTTPHeaderField: "X-Title")
+
+        let body: [String: Any] = [
+            "model": "google/gemini-2.0-flash-001",
+            "max_tokens": 256,
+            "messages": [
+                ["role": "user", "content": prompt]
+            ]
+        ]
+
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                return parseLocally(input)
+            }
+
+            // OpenRouter uses OpenAI-compatible response format
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let choices = json["choices"] as? [[String: Any]],
+               let message = choices.first?["message"] as? [String: Any],
+               let content = message["content"] as? String,
+               let jsonData = content.data(using: .utf8) {
+                return parseJSONResponse(jsonData)
+            }
+
+            return parseLocally(input)
+        } catch {
             return parseLocally(input)
         }
     }
@@ -96,7 +141,6 @@ final class AIParsingService {
                 return parseLocally(input)
             }
 
-            // Extract content from OpenAI response
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let choices = json["choices"] as? [[String: Any]],
                let message = choices.first?["message"] as? [String: Any],

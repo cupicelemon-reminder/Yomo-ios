@@ -142,18 +142,27 @@ class AuthService: ObservableObject {
     private func loadOrCreateUserProfile(for user: User) async {
         let userRef = db.collection("users").document(user.uid)
 
+        // Build a fallback profile from Firebase Auth data in case Firestore fails
+        let fallbackProfile = UserProfile(
+            id: user.uid,
+            displayName: user.displayName ?? "User",
+            email: user.email ?? "",
+            photoURL: user.photoURL?.absoluteString,
+            createdAt: Timestamp(date: Date())
+        )
+
         do {
             let snapshot = try await userRef.getDocument()
 
             if !snapshot.exists {
-                let profile: [String: Any] = [
+                let profileData: [String: Any] = [
                     "displayName": user.displayName ?? "User",
                     "email": user.email ?? "",
                     "photoURL": user.photoURL?.absoluteString ?? "",
                     "createdAt": Timestamp(date: Date())
                 ]
 
-                try await userRef.setData(profile)
+                try await userRef.setData(profileData)
 
                 try await userRef.collection("subscription").document("current").setData([
                     "isPro": false,
@@ -162,8 +171,8 @@ class AuthService: ObservableObject {
                 ])
             }
 
-            let profileData = try await userRef.getDocument().data()
-            if let data = profileData {
+            let fetchedData = try await userRef.getDocument().data()
+            if let data = fetchedData {
                 let profile = UserProfile(
                     id: user.uid,
                     displayName: data["displayName"] as? String ?? "",
@@ -172,12 +181,16 @@ class AuthService: ObservableObject {
                     createdAt: data["createdAt"] as? Timestamp ?? Timestamp(date: Date())
                 )
                 AppState.shared.updateUser(profile)
+            } else {
+                AppState.shared.updateUser(fallbackProfile)
             }
 
             // Register device with FCM token
             await registerDevice(userId: user.uid)
 
         } catch {
+            // Firestore failed but auth succeeded — still navigate the user
+            AppState.shared.updateUser(fallbackProfile)
             self.error = .userCreationFailed
         }
     }

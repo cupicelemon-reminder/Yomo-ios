@@ -39,7 +39,7 @@ Tech-savvy power users aged 18–34 who use multiple devices, value productivity
 | Component | Technology | Notes |
 |---|---|---|
 | iOS App (Primary) | Swift / SwiftUI | Full MVP with all features, deep notification integration |
-| Android App (Secondary) | React Native + Expo | Visual shell mirroring iOS design, demonstrates sync capability only |
+| Android App (Secondary) | Kotlin / Jetpack Compose | Native Android app demonstrating cross-device sync (reminder list + complete) |
 | Backend / Database | Firebase Firestore | Real-time listeners for instant sync |
 | Push Notifications | Firebase Cloud Messaging (FCM) | Silent pushes to clear notifications cross-device |
 | Authentication | Firebase Auth | Google Sign-In + Phone Number (SMS OTP) |
@@ -484,7 +484,7 @@ Given 6–7 remaining days, suggested build order:
 | Day 4 | Recurrence engine + Advanced recurrence UI | All recurrence types working, next-trigger-date calculation correct |
 | Day 5 | Cross-device sync (FCM silent push + Cloud Functions) | Complete/snooze on one device clears notifications on others |
 | Day 6 | RevenueCat integration + Paywall + AI pre-fill | Subscription flow end-to-end, AI input working |
-| Day 7 | Visual polish + Android shell + TestFlight build | Glassmorphism pass, RN Android app mirroring style, final submission build |
+| Day 7 | Visual polish + Android native app + TestFlight build | Glassmorphism pass, Kotlin/Compose Android sync demo, final submission build |
 
 **Risk buffer:** Days 6–7 are partially flex. If sync or notifications take longer, AI pre-fill and visual polish can be simplified.
 

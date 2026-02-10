@@ -11,6 +11,9 @@ import UserNotificationsUI
 
 class NotificationViewController: UIViewController, UNNotificationContentExtension {
 
+    // Storyboard outlet (required by MainInterface.storyboard connection)
+    @IBOutlet weak var label: UILabel!
+
     // MARK: - UI Elements
     private let titleLabel = UILabel()
     private let snoozeLabel = UILabel()
