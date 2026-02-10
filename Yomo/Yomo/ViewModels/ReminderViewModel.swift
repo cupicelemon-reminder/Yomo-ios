@@ -26,6 +26,7 @@ class ReminderViewModel: ObservableObject {
     private let service = ReminderService()
     private let localStore = LocalReminderStore.shared
     private var listener: ListenerRegistration?
+    private var hasStarted = false
 
     var isEmpty: Bool {
         reminders.isEmpty
@@ -37,6 +38,8 @@ class ReminderViewModel: ObservableObject {
     }
 
     func startListening() {
+        guard !hasStarted else { return }
+        hasStarted = true
         isLoading = true
 
         if isLocalMode {
@@ -63,6 +66,7 @@ class ReminderViewModel: ObservableObject {
     }
 
     func stopListening() {
+        hasStarted = false
         listener?.remove()
         listener = nil
         localStore.removeAllListeners()

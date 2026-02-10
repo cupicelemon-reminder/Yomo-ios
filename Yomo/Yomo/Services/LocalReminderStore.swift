@@ -248,6 +248,16 @@ final class LocalReminderStore {
         let seededKey = "yomo_samples_seeded"
         guard !defaults.bool(forKey: seededKey) else { return }
 
+        // Make seeding idempotent even if called multiple times during startup.
+        // If we already have reminders (or a concurrent call is in progress), don't add duplicates.
+        if !loadReminders().isEmpty {
+            defaults.set(true, forKey: seededKey)
+            return
+        }
+
+        // Set the flag before writing any reminders to avoid a race that double-seeds.
+        defaults.set(true, forKey: seededKey)
+
         let calendar = Calendar.current
         let now = Date()
 
@@ -269,8 +279,6 @@ final class LocalReminderStore {
         for sample in samples {
             createReminder(sample)
         }
-
-        defaults.set(true, forKey: seededKey)
     }
 
     // MARK: - Persistence (using DTO to avoid Firebase type issues)
