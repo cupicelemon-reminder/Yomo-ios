@@ -11,12 +11,24 @@ import FirebaseCore
 @main
 struct YomoApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    @StateObject private var appState = AppState.shared
+    @StateObject private var appState: AppState
+    @StateObject private var authService: AuthService
+
+    init() {
+        // Ensure Firebase is configured before any singletons read Auth state.
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+        }
+
+        _appState = StateObject(wrappedValue: AppState.shared)
+        _authService = StateObject(wrappedValue: AuthService.shared)
+    }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(appState)
+                .environmentObject(authService)
         }
     }
 }

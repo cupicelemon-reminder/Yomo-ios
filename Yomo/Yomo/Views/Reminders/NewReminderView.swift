@@ -8,6 +8,8 @@
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
+import Speech
+import AVFoundation
 
 struct NewReminderView: View {
     @Environment(\.dismiss) var dismiss
@@ -29,6 +31,10 @@ struct NewReminderView: View {
     @State private var customTimeRangeStart = Calendar.current.date(from: DateComponents(hour: 9)) ?? Date()
     @State private var customTimeRangeEnd = Calendar.current.date(from: DateComponents(hour: 18)) ?? Date()
     @State private var basedOnCompletion: Bool = false
+    @StateObject private var speechTranscriber = SpeechTranscriber()
+    @State private var isVoicePrefillActive = false
+    @State private var showSpeechPermissionAlert = false
+    @State private var speechPermissionMessage: String = ""
 
     var body: some View {
         NavigationView {
@@ -87,6 +93,20 @@ struct NewReminderView: View {
         .sheet(isPresented: $showPaywall) {
             PaywallView()
         }
+        .onChange(of: speechTranscriber.transcript) { newValue in
+            if isVoicePrefillActive {
+                naturalInput = newValue
+            }
+        }
+        .onDisappear {
+            isVoicePrefillActive = false
+            speechTranscriber.stopTranscribing()
+        }
+        .alert("Voice Input", isPresented: $showSpeechPermissionAlert) {
+            Button("OK") {}
+        } message: {
+            Text(speechPermissionMessage)
+        }
     }
 
     // MARK: - AI Input Section
@@ -94,14 +114,32 @@ struct NewReminderView: View {
     private var aiInputSection: some View {
         VStack(spacing: Spacing.md) {
             GlassCard {
-                TextField(
-                    "Type naturally: 'Coffee tomorrow 10am'",
-                    text: $naturalInput,
-                    axis: .vertical
-                )
-                .font(.bodyRegular)
-                .foregroundColor(.textPrimary)
-                .lineLimit(1...3)
+                HStack(alignment: .top, spacing: Spacing.sm) {
+                    TextField(
+                        "Type or speak: 'Coffee tomorrow 10am'",
+                        text: $naturalInput,
+                        axis: .vertical
+                    )
+                    .font(.bodyRegular)
+                    .foregroundColor(.textPrimary)
+                    .lineLimit(1...3)
+
+                    Button {
+                        toggleVoiceInput()
+                    } label: {
+                        Image(systemName: speechTranscriber.isRecording ? "stop.circle.fill" : "mic.circle.fill")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(speechTranscriber.isRecording ? .dangerRed : .brandBlue)
+                            .accessibilityLabel(speechTranscriber.isRecording ? "Stop voice input" : "Start voice input")
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            if speechTranscriber.isRecording {
+                Text("Listening...")
+                    .font(.bodySmall)
+                    .foregroundColor(.textSecondary)
             }
 
             HStack {
@@ -214,6 +252,38 @@ struct NewReminderView: View {
     }
 
     // MARK: - Actions
+
+    private func toggleVoiceInput() {
+        HapticManager.light()
+
+        if speechTranscriber.isRecording {
+            speechTranscriber.stopTranscribing()
+            isVoicePrefillActive = false
+
+            // Auto-parse after voice capture ends.
+            if !naturalInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                parseInput()
+            }
+            return
+        }
+
+        Task {
+            let ok = await speechTranscriber.requestPermissionsIfNeeded()
+            guard ok else {
+                await MainActor.run {
+                    speechPermissionMessage = speechTranscriber.lastErrorMessage
+                        ?? "Please allow Microphone and Speech Recognition permissions in Settings."
+                    showSpeechPermissionAlert = true
+                }
+                return
+            }
+
+            await MainActor.run {
+                isVoicePrefillActive = true
+                speechTranscriber.startTranscribing()
+            }
+        }
+    }
 
     private func parseInput() {
         guard !naturalInput.isEmpty else { return }
@@ -333,5 +403,123 @@ struct NewReminderView: View {
                 basedOnCompletion: basedOnCompletion
             )
         }
+    }
+}
+
+@MainActor
+final class SpeechTranscriber: NSObject, ObservableObject {
+    @Published var transcript: String = ""
+    @Published var isRecording: Bool = false
+
+    private let recognizer = SFSpeechRecognizer(locale: Locale.current)
+    private var audioEngine: AVAudioEngine?
+    private var request: SFSpeechAudioBufferRecognitionRequest?
+    private var task: SFSpeechRecognitionTask?
+
+    private(set) var lastErrorMessage: String?
+
+    func requestPermissionsIfNeeded() async -> Bool {
+        // Speech recognition permission
+        let speechStatus: SFSpeechRecognizerAuthorizationStatus = await withCheckedContinuation { continuation in
+            SFSpeechRecognizer.requestAuthorization { status in
+                continuation.resume(returning: status)
+            }
+        }
+
+        guard speechStatus == .authorized else {
+            lastErrorMessage = "Speech recognition permission is required to use voice input."
+            return false
+        }
+
+        // Microphone permission
+        let micGranted: Bool = await withCheckedContinuation { continuation in
+            AVAudioSession.sharedInstance().requestRecordPermission { granted in
+                continuation.resume(returning: granted)
+            }
+        }
+
+        guard micGranted else {
+            lastErrorMessage = "Microphone permission is required to use voice input."
+            return false
+        }
+
+        lastErrorMessage = nil
+        return true
+    }
+
+    func startTranscribing() {
+        guard !isRecording else { return }
+        guard let recognizer else {
+            lastErrorMessage = "Speech recognition is not available on this device."
+            return
+        }
+
+        transcript = ""
+        lastErrorMessage = nil
+        isRecording = true
+
+        let audioEngine = AVAudioEngine()
+        self.audioEngine = audioEngine
+
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true
+        self.request = request
+
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.record, mode: .measurement, options: [.duckOthers, .allowBluetooth])
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            lastErrorMessage = "Unable to start audio session."
+            stopTranscribing()
+            return
+        }
+
+        let inputNode = audioEngine.inputNode
+        inputNode.removeTap(onBus: 0)
+
+        let format = inputNode.outputFormat(forBus: 0)
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+            self?.request?.append(buffer)
+        }
+
+        audioEngine.prepare()
+        do {
+            try audioEngine.start()
+        } catch {
+            lastErrorMessage = "Unable to start recording."
+            stopTranscribing()
+            return
+        }
+
+        task = recognizer.recognitionTask(with: request) { [weak self] result, error in
+            guard let self else { return }
+            Task { @MainActor in
+                if let result {
+                    self.transcript = result.bestTranscription.formattedString
+                }
+
+                if error != nil || (result?.isFinal ?? false) {
+                    self.stopTranscribing()
+                }
+            }
+        }
+    }
+
+    func stopTranscribing() {
+        guard isRecording else { return }
+
+        isRecording = false
+
+        audioEngine?.stop()
+        audioEngine?.inputNode.removeTap(onBus: 0)
+        request?.endAudio()
+
+        task?.cancel()
+        task = nil
+        request = nil
+        audioEngine = nil
+
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 }

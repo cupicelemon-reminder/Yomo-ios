@@ -13,7 +13,9 @@ import FirebaseMessaging
 import GoogleSignIn
 
 @MainActor
-class AuthService: ObservableObject {
+final class AuthService: ObservableObject {
+    static let shared = AuthService()
+
     @Published var currentUser: User?
     @Published var isLoading = false
     @Published var error: AuthError?
@@ -38,7 +40,7 @@ class AuthService: ObservableObject {
         }
     }
 
-    init() {
+    private init() {
         self.currentUser = Auth.auth().currentUser
 
         authStateListenerHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in

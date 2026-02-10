@@ -20,7 +20,7 @@ class AuthViewModel: ObservableObject {
     @Published var showPhoneInput = false
     @Published var showCodeInput = false
 
-    private let authService = AuthService()
+    private let authService = AuthService.shared
 
     init() {
         // Check initial auth state

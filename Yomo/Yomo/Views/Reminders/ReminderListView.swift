@@ -73,10 +73,17 @@ struct ReminderListView: View {
     // MARK: - Nav Bar
     private var navBar: some View {
         HStack {
-            Image("logo-nobg")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 96, height: 96)
+            if viewModel.isEmpty {
+                // Keep spacing for the gear button alignment, but hide the logo when
+                // the empty state already shows a large logo in the center.
+                Color.clear
+                    .frame(width: 96, height: 96)
+            } else {
+                Image("logo-nobg")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 96, height: 96)
+            }
 
             Spacer()
 
@@ -95,53 +102,56 @@ struct ReminderListView: View {
 
     // MARK: - Reminder List
     private var reminderList: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: Spacing.md) {
-                if !viewModel.overdueReminders.isEmpty {
-                    reminderSection(
-                        title: "OVERDUE",
-                        titleColor: .dangerRed,
-                        reminders: viewModel.overdueReminders
-                    )
-                }
-
-                if !viewModel.todayReminders.isEmpty {
-                    reminderSection(
-                        title: "TODAY",
-                        titleColor: .textSecondary,
-                        reminders: viewModel.todayReminders
-                    )
-                }
-
-                if !viewModel.tomorrowReminders.isEmpty {
-                    reminderSection(
-                        title: "TOMORROW",
-                        titleColor: .textSecondary,
-                        reminders: viewModel.tomorrowReminders
-                    )
-                }
-
-                if !viewModel.thisWeekReminders.isEmpty {
-                    reminderSection(
-                        title: "THIS WEEK",
-                        titleColor: .textSecondary,
-                        reminders: viewModel.thisWeekReminders
-                    )
-                }
-
-                if !viewModel.laterReminders.isEmpty {
-                    reminderSection(
-                        title: "LATER",
-                        titleColor: .textSecondary,
-                        reminders: viewModel.laterReminders
-                    )
-                }
-
-                Spacer().frame(height: 80)
+        List {
+            if !viewModel.overdueReminders.isEmpty {
+                reminderSection(
+                    title: "OVERDUE",
+                    titleColor: .dangerRed,
+                    reminders: viewModel.overdueReminders
+                )
             }
-            .padding(.horizontal, Spacing.lg)
-            .padding(.top, Spacing.sm)
+
+            if !viewModel.todayReminders.isEmpty {
+                reminderSection(
+                    title: "TODAY",
+                    titleColor: .textSecondary,
+                    reminders: viewModel.todayReminders
+                )
+            }
+
+            if !viewModel.tomorrowReminders.isEmpty {
+                reminderSection(
+                    title: "TOMORROW",
+                    titleColor: .textSecondary,
+                    reminders: viewModel.tomorrowReminders
+                )
+            }
+
+            if !viewModel.thisWeekReminders.isEmpty {
+                reminderSection(
+                    title: "THIS WEEK",
+                    titleColor: .textSecondary,
+                    reminders: viewModel.thisWeekReminders
+                )
+            }
+
+            if !viewModel.laterReminders.isEmpty {
+                reminderSection(
+                    title: "LATER",
+                    titleColor: .textSecondary,
+                    reminders: viewModel.laterReminders
+                )
+            }
+
+            // Space so the FAB doesn't cover the last card.
+            Color.clear
+                .frame(height: 80)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color.background)
     }
 
     // MARK: - Section
@@ -150,18 +160,46 @@ struct ReminderListView: View {
         titleColor: Color,
         reminders: [Reminder]
     ) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text(title)
-                .font(.sectionHeader)
-                .foregroundColor(titleColor)
-                .tracking(1)
-                .padding(.top, Spacing.sm)
-
+        Section {
             ForEach(reminders) { reminder in
                 ReminderCard(reminder: reminder) {
                     selectedReminder = reminder
                 }
+                .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                    Button {
+                        viewModel.completeReminder(reminder)
+                    } label: {
+                        Label("Complete", systemImage: "checkmark")
+                    }
+                    .tint(.successGreen)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        viewModel.deleteReminder(reminder)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                .listRowInsets(
+                    EdgeInsets(
+                        top: 6,
+                        leading: Spacing.lg,
+                        bottom: 6,
+                        trailing: Spacing.lg
+                    )
+                )
             }
+        } header: {
+            Text(title)
+                .font(.sectionHeader)
+                .foregroundColor(titleColor)
+                .tracking(1)
+                .padding(.horizontal, Spacing.lg)
+                .padding(.top, Spacing.sm)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .listRowInsets(EdgeInsets())
         }
     }
 
