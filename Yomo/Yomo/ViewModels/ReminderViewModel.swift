@@ -40,6 +40,7 @@ class ReminderViewModel: ObservableObject {
         isLoading = true
 
         if isLocalMode {
+            localStore.migrateIfNeeded()
             localStore.seedSampleRemindersIfNeeded()
             localStore.addChangeListener { [weak self] reminders in
                 Task { @MainActor in

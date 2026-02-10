@@ -70,7 +70,7 @@ struct ReminderListView: View {
             Image("logo-nobg")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 48, height: 48)
+                .frame(width: 96, height: 96)
 
             Spacer()
 

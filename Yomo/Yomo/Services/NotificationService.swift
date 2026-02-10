@@ -197,11 +197,15 @@ final class NotificationService {
             // Snooze notification scheduling failed silently
         }
 
-        // Update Firestore with snoozed time
-        await updateSnoozedUntil(reminderId: reminderId, date: snoozeDate)
+        // Update storage with snoozed time
+        if FirebaseAuthHelper.currentUserId != nil {
+            await updateSnoozedUntilFirestore(reminderId: reminderId, date: snoozeDate)
+        } else {
+            LocalReminderStore.shared.snoozeReminder(id: reminderId, until: snoozeDate)
+        }
     }
 
-    private func updateSnoozedUntil(reminderId: String, date: Date) async {
+    private func updateSnoozedUntilFirestore(reminderId: String, date: Date) async {
         guard let userId = FirebaseAuthHelper.currentUserId else { return }
 
         let db = Firestore.firestore()

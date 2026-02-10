@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct SnoozeView: View {
     let reminderId: String
@@ -138,26 +139,37 @@ struct SnoozeView: View {
         }
     }
 
+    private var isLocalMode: Bool {
+        Auth.auth().currentUser == nil
+    }
+
     private func handleComplete() {
         isProcessing = true
         HapticManager.success()
 
-        let service = ReminderService()
         NotificationService.shared.cancelNotification(for: reminderId)
 
-        Task {
-            do {
-                // Fetch the reminder to check recurrence
-                let reminders = try await service.fetchReminders()
-                if let reminder = reminders.first(where: { $0.id == reminderId }) {
-                    try await service.completeReminder(reminder)
-                }
-            } catch {
-                // Error completing reminder
+        if isLocalMode {
+            if let reminder = LocalReminderStore.shared.findReminder(byId: reminderId) {
+                LocalReminderStore.shared.completeReminder(reminder)
             }
-            await MainActor.run {
-                isProcessing = false
-                onDismiss()
+            isProcessing = false
+            onDismiss()
+        } else {
+            let service = ReminderService()
+            Task {
+                do {
+                    let reminders = try await service.fetchReminders()
+                    if let reminder = reminders.first(where: { $0.id == reminderId }) {
+                        try await service.completeReminder(reminder)
+                    }
+                } catch {
+                    // Error completing reminder
+                }
+                await MainActor.run {
+                    isProcessing = false
+                    onDismiss()
+                }
             }
         }
     }

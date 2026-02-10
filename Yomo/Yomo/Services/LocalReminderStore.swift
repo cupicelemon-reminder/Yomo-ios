@@ -16,6 +16,78 @@ final class LocalReminderStore {
 
     private init() {}
 
+    // MARK: - DTO for JSON serialization
+    // Firebase Timestamp and @DocumentID don't work with JSONEncoder/JSONDecoder,
+    // so we convert to/from plain types for persistence.
+
+    private struct ReminderDTO: Codable {
+        var id: String
+        var title: String
+        var notes: String?
+        var triggerDate: Double
+        var recurrenceType: String?
+        var recurrenceInterval: Int?
+        var recurrenceUnit: String?
+        var recurrenceDaysOfWeek: [Int]?
+        var recurrenceTimeRangeStart: String?
+        var recurrenceTimeRangeEnd: String?
+        var recurrenceBasedOnCompletion: Bool?
+        var status: String
+        var snoozedUntil: Double?
+        var createdAt: Double
+        var updatedAt: Double
+
+        init(from reminder: Reminder) {
+            self.id = reminder.id ?? UUID().uuidString
+            self.title = reminder.title
+            self.notes = reminder.notes
+            self.triggerDate = reminder.triggerDate.dateValue().timeIntervalSince1970
+            self.status = reminder.status.rawValue
+            self.snoozedUntil = reminder.snoozedUntil?.dateValue().timeIntervalSince1970
+            self.createdAt = reminder.createdAt.dateValue().timeIntervalSince1970
+            self.updatedAt = reminder.updatedAt.dateValue().timeIntervalSince1970
+
+            if let recurrence = reminder.recurrence {
+                self.recurrenceType = recurrence.type.rawValue
+                self.recurrenceInterval = recurrence.interval
+                self.recurrenceUnit = recurrence.unit?.rawValue
+                self.recurrenceDaysOfWeek = recurrence.daysOfWeek
+                self.recurrenceTimeRangeStart = recurrence.timeRangeStart
+                self.recurrenceTimeRangeEnd = recurrence.timeRangeEnd
+                self.recurrenceBasedOnCompletion = recurrence.basedOnCompletion
+            }
+        }
+
+        func toReminder() -> Reminder {
+            var recurrence: RecurrenceRule?
+            if let typeStr = recurrenceType,
+               let type = RecurrenceType(rawValue: typeStr),
+               type != .none {
+                recurrence = RecurrenceRule(
+                    type: type,
+                    interval: recurrenceInterval ?? 1,
+                    unit: recurrenceUnit.flatMap { RecurrenceUnit(rawValue: $0) },
+                    daysOfWeek: recurrenceDaysOfWeek,
+                    timeRangeStart: recurrenceTimeRangeStart,
+                    timeRangeEnd: recurrenceTimeRangeEnd,
+                    basedOnCompletion: recurrenceBasedOnCompletion ?? false
+                )
+            }
+
+            return Reminder(
+                id: id,
+                title: title,
+                notes: notes,
+                triggerDate: Timestamp(date: Date(timeIntervalSince1970: triggerDate)),
+                recurrence: recurrence,
+                status: Reminder.ReminderStatus(rawValue: status) ?? .active,
+                snoozedUntil: snoozedUntil.map { Timestamp(date: Date(timeIntervalSince1970: $0)) },
+                createdAt: Timestamp(date: Date(timeIntervalSince1970: createdAt)),
+                updatedAt: Timestamp(date: Date(timeIntervalSince1970: updatedAt))
+            )
+        }
+    }
+
     // MARK: - CRUD
 
     func allActiveReminders() -> [Reminder] {
@@ -24,8 +96,8 @@ final class LocalReminderStore {
 
     func createReminder(_ reminder: Reminder) {
         var reminders = loadReminders()
-        var newReminder = reminder
-        if newReminder.id == nil {
+        let newReminder: Reminder
+        if reminder.id == nil {
             newReminder = Reminder(
                 id: UUID().uuidString,
                 title: reminder.title,
@@ -37,6 +109,8 @@ final class LocalReminderStore {
                 createdAt: reminder.createdAt,
                 updatedAt: reminder.updatedAt
             )
+        } else {
+            newReminder = reminder
         }
         reminders.append(newReminder)
         saveReminders(reminders)
@@ -96,6 +170,32 @@ final class LocalReminderStore {
         notifyChange()
     }
 
+    /// Find a reminder by ID (for notification action handling in local mode)
+    func findReminder(byId id: String) -> Reminder? {
+        loadReminders().first { $0.id == id }
+    }
+
+    /// Update the snoozedUntil field for a local reminder
+    func snoozeReminder(id: String, until date: Date) {
+        var reminders = loadReminders()
+        if let index = reminders.firstIndex(where: { $0.id == id }) {
+            let r = reminders[index]
+            reminders[index] = Reminder(
+                id: r.id,
+                title: r.title,
+                notes: r.notes,
+                triggerDate: r.triggerDate,
+                recurrence: r.recurrence,
+                status: r.status,
+                snoozedUntil: Timestamp(date: date),
+                createdAt: r.createdAt,
+                updatedAt: Timestamp(date: Date())
+            )
+            saveReminders(reminders)
+            notifyChange()
+        }
+    }
+
     // MARK: - Listener simulation
 
     func addChangeListener(_ callback: @escaping ([Reminder]) -> Void) {
@@ -105,6 +205,19 @@ final class LocalReminderStore {
 
     func removeAllListeners() {
         changeCallbacks.removeAll()
+    }
+
+    // MARK: - Data migration
+
+    /// Clears corrupted data from pre-DTO storage format and resets seed flag
+    func migrateIfNeeded() {
+        let migrationKey = "yomo_dto_migration_v1"
+        guard !UserDefaults.standard.bool(forKey: migrationKey) else { return }
+
+        // Clear old data that was encoded with Firebase Timestamp (can't decode with DTO)
+        UserDefaults.standard.removeObject(forKey: storageKey)
+        UserDefaults.standard.removeObject(forKey: "yomo_samples_seeded")
+        UserDefaults.standard.set(true, forKey: migrationKey)
     }
 
     // MARK: - Sample reminders for first launch
@@ -138,19 +251,23 @@ final class LocalReminderStore {
         UserDefaults.standard.set(true, forKey: seededKey)
     }
 
-    // MARK: - Persistence
+    // MARK: - Persistence (using DTO to avoid Firebase type issues)
 
     private func loadReminders() -> [Reminder] {
         guard let data = UserDefaults.standard.data(forKey: storageKey) else {
             return []
         }
         let decoder = JSONDecoder()
-        return (try? decoder.decode([Reminder].self, from: data)) ?? []
+        guard let dtos = try? decoder.decode([ReminderDTO].self, from: data) else {
+            return []
+        }
+        return dtos.map { $0.toReminder() }
     }
 
     private func saveReminders(_ reminders: [Reminder]) {
+        let dtos = reminders.map { ReminderDTO(from: $0) }
         let encoder = JSONEncoder()
-        if let data = try? encoder.encode(reminders) {
+        if let data = try? encoder.encode(dtos) {
             UserDefaults.standard.set(data, forKey: storageKey)
         }
     }
@@ -162,7 +279,7 @@ final class LocalReminderStore {
         }
     }
 
-    // MARK: - Recurrence calculation (same as ReminderService)
+    // MARK: - Recurrence calculation
 
     private func calculateNextDate(from date: Date, recurrence: RecurrenceRule) -> Date {
         let calendar = Calendar.current

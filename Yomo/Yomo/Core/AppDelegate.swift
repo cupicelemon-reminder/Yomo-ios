@@ -118,13 +118,22 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     }
 
     private func handleComplete(reminderId: String) {
+        NotificationService.shared.cancelNotification(for: reminderId)
+
+        // Local mode
+        if Auth.auth().currentUser == nil {
+            if let reminder = LocalReminderStore.shared.findReminder(byId: reminderId) {
+                LocalReminderStore.shared.completeReminder(reminder)
+            }
+            return
+        }
+
+        // Firebase mode
         guard let userId = Auth.auth().currentUser?.uid else { return }
 
         let db = Firestore.firestore()
         let ref = db.collection("users").document(userId)
             .collection("reminders").document(reminderId)
-
-        NotificationService.shared.cancelNotification(for: reminderId)
 
         Task {
             do {
@@ -133,7 +142,6 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                 let recurrenceType = recurrenceData?["type"] as? String
 
                 if let recurrenceType, recurrenceType != "none" {
-                    // Recurring: calculate next date
                     let triggerDate = (doc.data()?["triggerDate"] as? Timestamp)?.dateValue() ?? Date()
                     let interval = recurrenceData?["interval"] as? Int ?? 1
                     let unit = recurrenceData?["unit"] as? String ?? "day"
