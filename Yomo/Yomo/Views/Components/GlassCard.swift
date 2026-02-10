@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct GlassCard<Content: View>: View {
+    @EnvironmentObject private var appState: AppState
     let content: Content
 
     init(@ViewBuilder content: () -> Content) {
@@ -18,16 +19,18 @@ struct GlassCard<Content: View>: View {
         content
             .padding(Spacing.md)
             .background(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(Color.cardGlass)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                    )
-                    .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .fill(Color.surface)
+
+                    if appState.theme.usesGlassMaterial {
                         RoundedRectangle(cornerRadius: CornerRadius.md)
                             .fill(.ultraThinMaterial)
-                    )
+                    }
+
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .stroke(Color.cardBorder, lineWidth: 1)
+                }
             )
             .glassCardShadow()
     }
@@ -50,5 +53,6 @@ struct GlassCard<Content: View>: View {
             }
         }
         .padding()
+        .environmentObject(AppState.shared)
     }
 }

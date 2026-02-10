@@ -15,7 +15,7 @@ struct SettingsView: View {
     @State private var showPaywall = false
     @State private var showSignIn = false
     @State private var showNotificationsSettingsHint = false
-    @State private var showThemeComingSoon = false
+    @State private var showThemePicker = false
     @State private var showSignOutConfirm = false
     @State private var showDeleteConfirm = false
 
@@ -66,16 +66,15 @@ struct SettingsView: View {
         .fullScreenCover(isPresented: $showSignIn) {
             SignInSheetView()
         }
+        .sheet(isPresented: $showThemePicker) {
+            ThemePickerSheetView()
+                .environmentObject(appState)
+        }
         .alert("Manage Notifications", isPresented: $showNotificationsSettingsHint) {
             Button("Open Settings") { openNotificationSettings() }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Notification permissions are managed in iOS Settings.")
-        }
-        .alert("Themes", isPresented: $showThemeComingSoon) {
-            Button("OK") {}
-        } message: {
-            Text("Theme switching is coming soon.")
         }
     }
 
@@ -171,7 +170,7 @@ struct SettingsView: View {
 
                 Button {
                     if appState.isPro {
-                        showThemeComingSoon = true
+                        showThemePicker = true
                     } else {
                         showPaywall = true
                     }
@@ -180,7 +179,7 @@ struct SettingsView: View {
                         icon: "paintpalette.fill",
                         iconColor: .brandBlue,
                         title: "Theme",
-                        detail: appState.isPro ? "Choose your theme" : "Pro feature",
+                        detail: appState.isPro ? appState.theme.displayName : "Pro feature",
                         showChevron: true
                     )
                 }
@@ -411,9 +410,103 @@ private struct SignInSheetView: View {
     }
 }
 
+private struct ThemePickerSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var appState: AppState
+
+    private var selection: Binding<AppTheme> {
+        Binding(
+            get: { appState.theme },
+            set: { appState.updateTheme($0) }
+        )
+    }
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: Spacing.lg) {
+                Text("Choose a theme")
+                    .font(.titleMedium)
+                    .foregroundColor(.textPrimary)
+                    .padding(.top, Spacing.lg)
+
+                Picker("Theme", selection: selection) {
+                    ForEach(AppTheme.allCases) { theme in
+                        Text(theme.displayName).tag(theme)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, Spacing.lg)
+
+                VStack(alignment: .leading, spacing: Spacing.sm) {
+                    themeHint(
+                        title: "Glass",
+                        detail: "Always light. Warm glass cards, no black glass."
+                    )
+                    themeHint(
+                        title: "Light",
+                        detail: "Clean light UI with solid cards."
+                    )
+                    themeHint(
+                        title: "Dark",
+                        detail: "Dark UI with solid cards."
+                    )
+                }
+                .padding(.horizontal, Spacing.lg)
+
+                Spacer()
+            }
+            .background(Color.background.ignoresSafeArea())
+            .navigationTitle("Theme")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .foregroundColor(.brandBlue)
+                }
+            }
+        }
+    }
+
+    private func themeHint(title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: Spacing.md) {
+            Image(systemName: "circle.fill")
+                .font(.system(size: 8))
+                .foregroundColor(.brandBlue)
+                .padding(.top, 6)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.bodyRegular)
+                    .foregroundColor(.textPrimary)
+
+                Text(detail)
+                    .font(.bodySmall)
+                    .foregroundColor(.textSecondary)
+            }
+
+            Spacer()
+        }
+        .padding(Spacing.md)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .fill(Color.surface)
+                if appState.theme.usesGlassMaterial {
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .fill(.ultraThinMaterial)
+                }
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .stroke(Color.cardBorder, lineWidth: 1)
+            }
+        )
+        .glassCardShadow()
+    }
+}
+
 // MARK: - Settings Section
 
 private struct SettingsSection<Content: View>: View {
+    @EnvironmentObject private var appState: AppState
     let title: String
     @ViewBuilder let content: Content
 
@@ -426,12 +519,18 @@ private struct SettingsSection<Content: View>: View {
 
             content
                 .background(
-                    RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .fill(Color.white)
-                        .overlay(
+                    ZStack {
+                        RoundedRectangle(cornerRadius: CornerRadius.md)
+                            .fill(Color.surface)
+
+                        if appState.theme.usesGlassMaterial {
                             RoundedRectangle(cornerRadius: CornerRadius.md)
-                                .stroke(Color.dividerColor, lineWidth: 1)
-                        )
+                                .fill(.ultraThinMaterial)
+                        }
+
+                        RoundedRectangle(cornerRadius: CornerRadius.md)
+                            .stroke(Color.cardBorder, lineWidth: 1)
+                    }
                 )
                 .glassCardShadow()
         }

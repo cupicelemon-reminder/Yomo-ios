@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ReminderCard: View {
+    @EnvironmentObject private var appState: AppState
     let reminder: Reminder
     var onTap: (() -> Void)? = nil
 
@@ -74,12 +75,18 @@ struct ReminderCard: View {
             }
             .padding(Spacing.md)
             .background(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(Color.white)
-                    .overlay(
+                ZStack {
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .fill(Color.surface)
+
+                    if appState.theme.usesGlassMaterial {
                         RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .stroke(Color.cardBorder, lineWidth: 1)
-                    )
+                            .fill(.ultraThinMaterial)
+                    }
+
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .stroke(Color.cardBorder, lineWidth: 1)
+                }
             )
             .glassCardShadow()
         }

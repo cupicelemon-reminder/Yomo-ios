@@ -115,7 +115,7 @@ struct PaywallView: View {
                 .fill(Color.cardGlass)
                 .overlay(
                     RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.cardBorder, lineWidth: 1)
                 )
         )
         .glassCardShadow()
@@ -323,7 +323,7 @@ private struct PlanCard: View {
             .padding(Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(Color.white)
+                    .fill(Color.surface)
                     .overlay(
                         RoundedRectangle(cornerRadius: CornerRadius.md)
                             .stroke(

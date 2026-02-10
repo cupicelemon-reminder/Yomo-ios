@@ -84,6 +84,8 @@ struct ContentView: View {
                 .environmentObject(appState)
             }
         }
+        .preferredColorScheme(appState.theme.preferredColorScheme)
+        .animation(.easeInOut(duration: 0.25), value: appState.theme)
         .task {
             await SubscriptionService.shared.checkSubscriptionStatus()
             await DeviceSyncService.shared.refreshFCMToken()

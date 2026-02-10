@@ -12,26 +12,126 @@ extension Color {
     // Brand Colors
     static let brandBlue = Color(hex: "#4A90D9")
     static let brandBlueLight = Color(hex: "#7AB8F5")
-    static let brandBlueBg = Color(hex: "#EBF3FC")
+    static var brandBlueBg: Color {
+        switch ThemePreferences.load() {
+        case .dark:
+            return Color(hex: "#162432")
+        case .glass, .light:
+            return Color(hex: "#EBF3FC")
+        }
+    }
     static let checkGold = Color(hex: "#F5A623")
-    static let goldBg = Color(hex: "#FFF5E0")
+    static var goldBg: Color {
+        switch ThemePreferences.load() {
+        case .dark:
+            return Color(hex: "#2B2416")
+        case .glass, .light:
+            return Color(hex: "#FFF5E0")
+        }
+    }
 
     // Backgrounds
-    static let background = Color(hex: "#F8F9FB")
-    static let cardGlass = Color.white.opacity(0.72)
-    static let cardBorder = Color.white.opacity(0.3)
+    static var background: Color {
+        switch ThemePreferences.load() {
+        case .dark:
+            return Color(hex: "#0E1116")
+        case .glass, .light:
+            return Color(hex: "#F8F9FB")
+        }
+    }
+
+    /// Primary surface fill for cards/sections/sheets.
+    static var surface: Color {
+        switch ThemePreferences.load() {
+        case .dark:
+            return Color(hex: "#171B22")
+        case .glass:
+            return Color.white.opacity(0.72)
+        case .light:
+            return Color.white
+        }
+    }
+
+    /// Translucent surface used by the glass theme.
+    static var cardGlass: Color {
+        switch ThemePreferences.load() {
+        case .glass:
+            return Color.white.opacity(0.72)
+        case .dark:
+            return Color(hex: "#171B22")
+        case .light:
+            return Color.white
+        }
+    }
+
+    static var cardBorder: Color {
+        switch ThemePreferences.load() {
+        case .glass:
+            return Color.white.opacity(0.3)
+        case .dark:
+            return Color.white.opacity(0.12)
+        case .light:
+            return Color.black.opacity(0.06)
+        }
+    }
 
     // Text
-    static let textPrimary = Color(hex: "#1A1A2E")
-    static let textSecondary = Color(hex: "#8E8E93")
-    static let textTertiary = Color(hex: "#AEAEB2")
+    static var textPrimary: Color {
+        switch ThemePreferences.load() {
+        case .dark:
+            return Color(hex: "#F4F6FA")
+        case .glass, .light:
+            return Color(hex: "#1A1A2E")
+        }
+    }
+    static var textSecondary: Color {
+        switch ThemePreferences.load() {
+        case .dark:
+            return Color(hex: "#A9AEBA")
+        case .glass, .light:
+            return Color(hex: "#8E8E93")
+        }
+    }
+    static var textTertiary: Color {
+        switch ThemePreferences.load() {
+        case .dark:
+            return Color(hex: "#7C8291")
+        case .glass, .light:
+            return Color(hex: "#AEAEB2")
+        }
+    }
 
     // Status Colors
     static let dangerRed = Color(hex: "#FF3B30")
     static let successGreen = Color(hex: "#34C759")
 
     // Divider
-    static let dividerColor = Color.black.opacity(0.06)
+    static var dividerColor: Color {
+        switch ThemePreferences.load() {
+        case .dark:
+            return Color.white.opacity(0.10)
+        case .glass, .light:
+            return Color.black.opacity(0.06)
+        }
+    }
+
+    static var shadowColor: Color {
+        switch ThemePreferences.load() {
+        case .dark:
+            return Color.black.opacity(0.35)
+        case .glass, .light:
+            return Color.black.opacity(0.06)
+        }
+    }
+
+    static var shadowElevatedColor: Color {
+        switch ThemePreferences.load() {
+        case .dark:
+            return Color.black.opacity(0.50)
+        case .glass, .light:
+            return Color.black.opacity(0.10)
+        }
+    }
 
     // Helper for hex colors
     init(hex: String) {
@@ -96,10 +196,10 @@ enum CornerRadius {
 // MARK: - Shadows
 extension View {
     func glassCardShadow() -> some View {
-        self.shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 2)
+        self.shadow(color: Color.shadowColor, radius: 6, x: 0, y: 2)
     }
 
     func elevatedShadow() -> some View {
-        self.shadow(color: Color.black.opacity(0.1), radius: 12, x: 0, y: 4)
+        self.shadow(color: Color.shadowElevatedColor, radius: 12, x: 0, y: 4)
     }
 }

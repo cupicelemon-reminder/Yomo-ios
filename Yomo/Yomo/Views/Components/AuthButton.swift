@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct AuthButton<Icon: View>: View {
+    @EnvironmentObject private var appState: AppState
     let title: String
     let action: () -> Void
     let iconView: Icon
@@ -50,12 +51,18 @@ struct AuthButton<Icon: View>: View {
             .frame(maxWidth: .infinity)
             .frame(height: 52)
             .background(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(Color.white)
-                    .overlay(
+                ZStack {
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .fill(Color.surface)
+
+                    if appState.theme.usesGlassMaterial {
                         RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .stroke(Color.dividerColor, lineWidth: 1)
-                    )
+                            .fill(.ultraThinMaterial)
+                    }
+
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .stroke(Color.cardBorder, lineWidth: 1)
+                }
             )
             .glassCardShadow()
         }

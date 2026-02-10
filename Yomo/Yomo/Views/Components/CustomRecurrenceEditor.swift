@@ -69,7 +69,7 @@ struct CustomRecurrenceEditor: View {
             .padding(.vertical, Spacing.xs)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.sm)
-                    .fill(Color.white)
+                    .fill(Color.surface)
             )
 
             // Unit picker
@@ -92,7 +92,7 @@ struct CustomRecurrenceEditor: View {
                 .padding(.vertical, Spacing.xs + 2)
                 .background(
                     RoundedRectangle(cornerRadius: CornerRadius.sm)
-                        .fill(Color.white)
+                        .fill(Color.surface)
                 )
             }
         }
@@ -164,7 +164,7 @@ struct CustomRecurrenceEditor: View {
                             .frame(width: 36, height: 36)
                             .background(
                                 Circle()
-                                    .fill(isSelected ? Color.brandBlue : Color.white)
+                                    .fill(isSelected ? Color.brandBlue : Color.surface)
                             )
                     }
                 }

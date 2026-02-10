@@ -22,6 +22,7 @@ class AppState: ObservableObject {
     @Published var isAuthenticated: Bool = false
     @Published var hasCompletedOnboarding: Bool = false
     @Published var currentScreen: AppScreen = .welcome
+    @Published var theme: AppTheme = .glass
 
     // Notification snooze navigation
     @Published var pendingSnoozeReminderId: String?
@@ -37,6 +38,7 @@ class AppState: ObservableObject {
     private init() {
         hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
         isPro = UserDefaults.standard.bool(forKey: "isPro")
+        theme = ThemePreferences.load()
 
         // Restore auth state
         if let _ = FirebaseAuthStateHelper.currentUser {
@@ -53,6 +55,11 @@ class AppState: ObservableObject {
         if let userDefaults = UserDefaults(suiteName: Constants.appGroupId) {
             userDefaults.set(isPro, forKey: "isPro")
         }
+    }
+
+    func updateTheme(_ theme: AppTheme) {
+        self.theme = theme
+        ThemePreferences.save(theme)
     }
 
     func updateUser(_ user: UserProfile?) {

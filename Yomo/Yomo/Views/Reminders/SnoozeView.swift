@@ -115,9 +115,16 @@ struct SnoozeView: View {
             .padding(.horizontal, Spacing.lg)
             .padding(.bottom, Spacing.xl)
             .background(
-                RoundedRectangle(cornerRadius: CornerRadius.xl)
-                    .fill(Color.white)
-                    .ignoresSafeArea(edges: .bottom)
+                ZStack {
+                    RoundedRectangle(cornerRadius: CornerRadius.xl)
+                        .fill(Color.surface)
+
+                    if appState.theme.usesGlassMaterial {
+                        RoundedRectangle(cornerRadius: CornerRadius.xl)
+                            .fill(.ultraThinMaterial)
+                    }
+                }
+                .ignoresSafeArea(edges: .bottom)
             )
         }
     }
