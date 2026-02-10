@@ -27,6 +27,7 @@ class ReminderViewModel: ObservableObject {
     private let localStore = LocalReminderStore.shared
     private var listener: ListenerRegistration?
     private var hasStarted = false
+    private var lastActiveReminderIds: Set<String> = []
 
     var isEmpty: Bool {
         reminders.isEmpty
@@ -47,6 +48,7 @@ class ReminderViewModel: ObservableObject {
             localStore.seedSampleRemindersIfNeeded()
             localStore.addChangeListener { [weak self] reminders in
                 Task { @MainActor in
+                    self?.cancelNotificationsForRemovedReminders(activeReminders: reminders)
                     self?.reminders = reminders
                     self?.groupReminders(reminders)
                     self?.isLoading = false
@@ -57,6 +59,7 @@ class ReminderViewModel: ObservableObject {
         } else {
             listener = service.listenToReminders { [weak self] reminders in
                 Task { @MainActor in
+                    self?.cancelNotificationsForRemovedReminders(activeReminders: reminders)
                     self?.reminders = reminders
                     self?.groupReminders(reminders)
                     self?.isLoading = false
@@ -72,6 +75,7 @@ class ReminderViewModel: ObservableObject {
         listener?.remove()
         listener = nil
         localStore.removeAllListeners()
+        lastActiveReminderIds = []
     }
 
     func completeReminder(_ reminder: Reminder) {
@@ -154,5 +158,14 @@ class ReminderViewModel: ObservableObject {
             }
             return reminder.displayDate >= weekEnd
         }
+    }
+
+    private func cancelNotificationsForRemovedReminders(activeReminders: [Reminder]) {
+        let newIds = Set(activeReminders.compactMap { $0.id })
+        let removed = lastActiveReminderIds.subtracting(newIds)
+        for id in removed {
+            NotificationService.shared.cancelNotification(for: id)
+        }
+        lastActiveReminderIds = newIds
     }
 }
