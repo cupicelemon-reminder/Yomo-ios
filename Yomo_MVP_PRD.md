@@ -39,11 +39,11 @@ Tech-savvy power users aged 18–34 who use multiple devices, value productivity
 | Component | Technology | Notes |
 |---|---|---|
 | iOS App (Primary) | Swift / SwiftUI | Full MVP with all features, deep notification integration |
-| Android App (Secondary) | Kotlin / Jetpack Compose | Native Android app demonstrating cross-device sync (reminder list + complete) |
+| Android App (Secondary) | Kotlin / Jetpack Compose | 完整功能（创建/编辑/删除/重复/通知/同步消失/设置），不含 PaywallView/RevenueCat、AI 解析、自定义贪睡 slider |
 | Backend / Database | Firebase Firestore | Real-time listeners for instant sync |
 | Push Notifications | Firebase Cloud Messaging (FCM) | Silent pushes to clear notifications cross-device |
 | Authentication | Firebase Auth | Google Sign-In + Phone Number (SMS OTP) |
-| AI Pre-fill | Lightweight LLM API (Claude Haiku or GPT-4o-mini) | Extracts structured data from natural language input |
+| AI Pre-fill | OpenRouter (Gemini Flash) → Claude Haiku → GPT-4o-mini → 本地 fallback | 四级降级策略，从自然语言提取结构化提醒数据（仅 iOS） |
 | Monetization SDK | RevenueCat | Manages subscriptions and paywall |
 | Submission | iOS TestFlight | Single platform submission |
 
@@ -474,19 +474,18 @@ The following are explicitly excluded from MVP development:
 
 ## 11. Development Priority & Rough Timeline
 
-Given 6–7 remaining days, suggested build order:
+iOS MVP 全部核心功能已完成，当前阶段为 Android 功能补全 + iOS 收尾 + E2E 测试。
 
-| Day | Focus | Deliverable |
+| Phase | Focus | Status |
 |---|---|---|
-| Day 1 | Project setup + Firebase config + Auth | App skeleton, Google + Phone login working, Firestore connected |
-| Day 2 | Reminder CRUD + Firestore | Create / edit / delete / complete reminders, real-time list updates |
-| Day 3 | Local notifications + Notification Content Extension (Snooze Slider) | Notifications fire on time, long-press shows custom snooze UI |
-| Day 4 | Recurrence engine + Advanced recurrence UI | All recurrence types working, next-trigger-date calculation correct |
-| Day 5 | Cross-device sync (FCM silent push + Cloud Functions) | Complete/snooze on one device clears notifications on others |
-| Day 6 | RevenueCat integration + Paywall + AI pre-fill | Subscription flow end-to-end, AI input working |
-| Day 7 | Visual polish + Android native app + TestFlight build | Glassmorphism pass, Kotlin/Compose Android sync demo, final submission build |
+| Day 1-2 | 项目搭建 + Firebase + Auth + Reminder CRUD | ✅ 已完成 |
+| Day 3-4 | 本地通知 + 贪睡扩展 + 重复引擎 + 跨设备同步 | ✅ 已完成 |
+| Day 5-6 | RevenueCat + Paywall + AI 解析 + 引导流程 + 设置 | ✅ 已完成 |
+| Day 7-8 | Android 功能补全（创建/编辑/删除/通知/同步/设置） | 🔴 进行中 |
+| Day 9 | iOS API Key 安全化 + 主题验证 + 视觉 Polish | ⚠️ 待开始 |
+| Day 10 | E2E 跨设备测试 + TestFlight + Android APK 构建 | ⚠️ 待开始 |
 
-**Risk buffer:** Days 6–7 are partially flex. If sync or notifications take longer, AI pre-fill and visual polish can be simplified.
+**截止日期：** Feb 12, 2026 (RevenueCat Shipyard Creator Contest)
 
 ---
 
