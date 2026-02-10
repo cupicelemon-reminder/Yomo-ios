@@ -57,7 +57,7 @@ A powerful reminder app designed for power users with:
 ## 📂 Project Structure
 
 ```
-ios/Yomo/
+Yomo/Yomo/
 ├── YomoApp.swift              # App entry point
 ├── Core/
 │   ├── AppDelegate.swift      # Firebase initialization
@@ -100,19 +100,19 @@ ios/Yomo/
 2. **Configure Firebase**
    - Create a Firebase project at https://console.firebase.google.com
    - Download `GoogleService-Info.plist`
-   - Place it in `ios/Yomo/Resources/`
+   - Place it in `Yomo/Yomo/Resources/`
    - Update Bundle ID in Firebase to match `com.yomo.Yomo`
 
 3. **Add API Keys**
-   - Copy `ios/Yomo/Core/Constants.swift.example` to `Constants.swift`
-   - Add your API keys:
+   - Create your local constants file (gitignored):
+     - Copy `Yomo/Yomo/Core/Constants.swift.example` → `Yomo/Yomo/Core/Constants.swift`
+   - Add your API keys (keep them out of git):
      - RevenueCat API key
      - Claude/OpenAI API key (for AI parsing)
 
 4. **Open in Xcode**
    ```bash
-   cd ios
-   open Yomo.xcodeproj
+   open Yomo/Yomo.xcodeproj
    ```
 
 5. **Add Dependencies**
@@ -139,11 +139,11 @@ ios/Yomo/
 - iOS: `com.yomo.Yomo`
 - App Group: `group.com.yomo.Yomo`
 
-**Important**: Ensure your Firebase `GoogleService-Info.plist` BUNDLE_ID matches your Xcode Bundle Identifier. See `ios/BUNDLE_ID_FIX.md` for details.
+**Important**: Ensure your Firebase `GoogleService-Info.plist` BUNDLE_ID matches your Xcode Bundle Identifier.
 
 ### API Keys Required
 
-Create `ios/Yomo/Core/Constants.swift` from example:
+Create and edit `Yomo/Yomo/Core/Constants.swift` (do not commit real keys to a public repo):
 
 ```swift
 enum Constants {
@@ -159,10 +159,8 @@ enum Constants {
 
 ## 📖 Documentation
 
-- [Implementation Plan](docs/Implementation_Plan.md) - Complete 7-day roadmap
-- [Design Specification](docs/Yomo_Final_Design_Spec.md) - UI/UX design system
-- [Bundle ID Configuration](ios/BUNDLE_ID_FIX.md) - Firebase setup guide
-- [Xcode Project Setup](ios/CREATE_XCODE_PROJECT.md) - Detailed setup steps
+- [MVP PRD](Yomo_MVP_PRD.md)
+- [Design Specification](Yomo_Final_Design_Spec.md)
 
 ## 🎨 Design System
 

@@ -46,11 +46,16 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-# API Keys (DO NOT COMMIT)
+# API Keys & Secrets (DO NOT COMMIT)
 **/Constants.swift
 GoogleService-Info.plist
+*.p8
+*.p12
+*.pem
+.secrets/
 
 # Temporary files
 *.swp
 *.swo
 *~
+THE BRIEFS（这个是我选的brief).md
