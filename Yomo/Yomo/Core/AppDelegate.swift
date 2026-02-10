@@ -61,6 +61,23 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
     ) {
         Messaging.messaging().apnsToken = deviceToken
+
+        // Now that APNS token is set, FCM token can be generated/refreshed.
+        Task {
+            await DeviceSyncService.shared.refreshFCMToken()
+        }
+    }
+
+    func application(
+        _ application: UIApplication,
+        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        // Handle FCM silent pushes for cross-device notification sync.
+        Task {
+            await DeviceSyncService.shared.handleSilentPush(userInfo: userInfo)
+            completionHandler(.newData)
+        }
     }
 }
 
