@@ -40,50 +40,20 @@ final class NotificationService {
     // MARK: - Categories & Actions
 
     private func registerCategories() async {
-        let completeAction = UNNotificationAction(
-            identifier: NotificationAction.complete,
-            title: "Complete",
-            options: [.destructive]
-        )
-
-        let snooze5Action = UNNotificationAction(
-            identifier: NotificationAction.snooze5,
-            title: "Snooze 5 min",
-            options: []
-        )
-
-        let snooze15Action = UNNotificationAction(
-            identifier: NotificationAction.snooze15,
-            title: "Snooze 15 min",
-            options: []
-        )
-
-        let snooze30Action = UNNotificationAction(
-            identifier: NotificationAction.snooze30,
-            title: "Snooze 30 min",
-            options: []
-        )
-
-        let customSnoozeAction = UNNotificationAction(
-            identifier: NotificationAction.customSnooze,
-            title: "Custom Snooze...",
-            options: [.foreground]
-        )
-
-        // Free category: just complete + quick snooze
+        // No action buttons on notifications — user interacts via the in-app snooze view instead.
+        // Tapping the notification opens the app and shows the snooze sheet.
         let freeCategory = UNNotificationCategory(
             identifier: NotificationCategory.reminderFree,
-            actions: [completeAction, snooze5Action, snooze15Action],
+            actions: [],
             intentIdentifiers: [],
-            options: [.customDismissAction]
+            options: []
         )
 
-        // Pro category: complete + quick snooze + custom snooze
         let proCategory = UNNotificationCategory(
             identifier: NotificationCategory.reminderPro,
-            actions: [completeAction, snooze5Action, snooze15Action, snooze30Action, customSnoozeAction],
+            actions: [],
             intentIdentifiers: [],
-            options: [.customDismissAction]
+            options: []
         )
 
         center.setNotificationCategories([freeCategory, proCategory])

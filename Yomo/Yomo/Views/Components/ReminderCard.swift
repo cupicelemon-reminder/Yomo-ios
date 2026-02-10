@@ -57,7 +57,7 @@ struct ReminderCard: View {
                     Text(reminder.title)
                         .font(.titleSmall)
                         .foregroundColor(.textPrimary)
-                        .lineLimit(1)
+                        .lineLimit(2)
 
                     if let recurrenceText = recurrenceText {
                         Text(recurrenceText)

@@ -39,7 +39,7 @@ struct Reminder: Codable, Identifiable {
     // Computed properties
     var isOverdue: Bool {
         guard status == .active else { return false }
-        return triggerDate.dateValue() < Date()
+        return displayDate < Date()
     }
 
     var displayDate: Date {

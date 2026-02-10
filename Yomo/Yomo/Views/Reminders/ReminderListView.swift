@@ -155,20 +155,6 @@ struct ReminderListView: View {
                 ReminderCard(reminder: reminder) {
                     selectedReminder = reminder
                 }
-                .contextMenu {
-                    Button {
-                        HapticManager.success()
-                        viewModel.completeReminder(reminder)
-                    } label: {
-                        Label("Complete", systemImage: "checkmark.circle")
-                    }
-
-                    Button(role: .destructive) {
-                        viewModel.deleteReminder(reminder)
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                }
             }
         }
     }
