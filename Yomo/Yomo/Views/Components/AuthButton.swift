@@ -50,21 +50,7 @@ struct AuthButton<Icon: View>: View {
             .padding(.horizontal, Spacing.lg)
             .frame(maxWidth: .infinity)
             .frame(height: 52)
-            .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .fill(Color.surface)
-
-                    if appState.theme.usesGlassMaterial {
-                        RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .fill(.ultraThinMaterial)
-                    }
-
-                    RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .stroke(Color.cardBorder, lineWidth: 1)
-                }
-            )
-            .glassCardShadow()
+            .liquidGlassBackground(isGlass: appState.theme.usesGlassMaterial)
         }
     }
 }

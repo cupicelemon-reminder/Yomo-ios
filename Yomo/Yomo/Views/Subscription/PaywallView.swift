@@ -142,7 +142,7 @@ struct PaywallView: View {
                 price: annualPrice,
                 period: "/year",
                 isSelected: selectedPlan == .annual,
-                badge: "SAVE 44%"
+                badge: "SAVE 40%"
             ) {
                 selectedPlan = .annual
             }
@@ -199,7 +199,7 @@ struct PaywallView: View {
            let monthly = offering.monthly {
             return monthly.localizedPriceString
         }
-        return "$2.99"
+        return "$4.99"
     }
 
     private var annualPrice: String {
@@ -207,7 +207,7 @@ struct PaywallView: View {
            let annual = offering.annual {
             return annual.localizedPriceString
         }
-        return "$19.99"
+        return "$35.99"
     }
 
     // MARK: - Actions

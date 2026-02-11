@@ -139,6 +139,7 @@ struct NewReminderView: View {
             if shouldParseOnVoiceStop {
                 shouldParseOnVoiceStop = false
                 isVoicePrefillActive = false
+                UsageLimitService.shared.recordVoiceUse()
 
                 let trimmed = naturalInput.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !trimmed.isEmpty {
@@ -196,7 +197,20 @@ struct NewReminderView: View {
             Text("Tip: tap to parse. Press and hold to talk, release to stop and parse.")
                 .font(.bodySmall)
                 .foregroundColor(.textTertiary)
+
+            if !AppState.shared.isPro {
+                usageLimitIndicator
+            }
         }
+    }
+
+    private var usageLimitIndicator: some View {
+        let limits = UsageLimitService.shared
+        let parsesLeft = limits.remainingParseUses
+        let voiceLeft = limits.remainingVoiceUses
+        return Text("\(parsesLeft) parse\(parsesLeft == 1 ? "" : "s") · \(voiceLeft) voice left today")
+            .font(.bodySmall)
+            .foregroundColor(.textTertiary)
     }
 
     private var holdToTalkParseButton: some View {
@@ -359,6 +373,11 @@ struct NewReminderView: View {
         guard isHoldingParse else { return }
         guard !speechTranscriber.isRecording else { return }
 
+        if !UsageLimitService.shared.canUseVoice(isPro: AppState.shared.isPro) {
+            showPaywall = true
+            return
+        }
+
         HapticManager.light()
         debouncedAIParseTask?.cancel()
         debouncedAIParseTask = nil
@@ -385,8 +404,15 @@ struct NewReminderView: View {
     private func parseInput() {
         let trimmed = naturalInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+
+        if !UsageLimitService.shared.canUseTextParse(isPro: AppState.shared.isPro) {
+            showPaywall = true
+            return
+        }
+
         isParsing = true
         HapticManager.light()
+        UsageLimitService.shared.recordTextParseUse()
 
         debouncedAIParseTask?.cancel()
         debouncedAIParseTask = nil

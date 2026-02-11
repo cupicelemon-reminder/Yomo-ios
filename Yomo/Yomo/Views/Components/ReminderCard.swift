@@ -31,17 +31,51 @@ struct ReminderCard: View {
         guard let recurrence = reminder.recurrence, recurrence.type != .none else {
             return nil
         }
+
+        let suffix = recurrence.basedOnCompletion ? " (from completion)" : ""
+
         switch recurrence.type {
-        case .daily: return "Every day"
+        case .daily:
+            let base = recurrence.interval <= 1 ? "Every day" : "Every \(recurrence.interval) days"
+            return base + suffix
         case .weekly:
             if let days = recurrence.daysOfWeek, !days.isEmpty {
                 let dayNames = ["", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
                 let names = days.compactMap { $0 > 0 && $0 < dayNames.count ? dayNames[$0] : nil }
-                return "Every \(names.joined(separator: ", "))"
+                let prefix = recurrence.interval <= 1 ? "Every" : "Every \(recurrence.interval) weeks on"
+                return "\(prefix) \(names.joined(separator: ", "))" + suffix
             }
-            return "Every week"
-        case .custom: return "Custom"
-        case .none: return nil
+            let base = recurrence.interval <= 1 ? "Every week" : "Every \(recurrence.interval) weeks"
+            return base + suffix
+        case .custom:
+            guard let unit = recurrence.unit else { return "Custom" + suffix }
+            let interval = recurrence.interval
+            let base: String
+            switch unit {
+            case .hour:
+                let text = interval <= 1 ? "Every hour" : "Every \(interval) hours"
+                if let start = recurrence.timeRangeStart, let end = recurrence.timeRangeEnd {
+                    base = "\(text) (\(start)\u{2013}\(end))"
+                } else {
+                    base = text
+                }
+            case .day:
+                base = interval <= 1 ? "Every day" : "Every \(interval) days"
+            case .week:
+                if let days = recurrence.daysOfWeek, !days.isEmpty {
+                    let dayNames = ["", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+                    let names = days.compactMap { $0 > 0 && $0 < dayNames.count ? dayNames[$0] : nil }
+                    let prefix = interval <= 1 ? "Every" : "Every \(interval) weeks on"
+                    base = "\(prefix) \(names.joined(separator: ", "))"
+                } else {
+                    base = interval <= 1 ? "Every week" : "Every \(interval) weeks"
+                }
+            case .month:
+                base = interval <= 1 ? "Every month" : "Every \(interval) months"
+            }
+            return base + suffix
+        case .none:
+            return nil
         }
     }
 
@@ -74,21 +108,7 @@ struct ReminderCard: View {
                     .foregroundColor(.textSecondary)
             }
             .padding(Spacing.md)
-            .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .fill(Color.surface)
-
-                    if appState.theme.usesGlassMaterial {
-                        RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .fill(.ultraThinMaterial)
-                    }
-
-                    RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .stroke(Color.cardBorder, lineWidth: 1)
-                }
-            )
-            .glassCardShadow()
+            .liquidGlassBackground(isGlass: appState.theme.usesGlassMaterial)
         }
         .buttonStyle(.plain)
     }

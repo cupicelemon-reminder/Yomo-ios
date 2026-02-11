@@ -37,6 +37,14 @@ enum AppTheme: String, CaseIterable, Identifiable, Codable {
     var usesGlassMaterial: Bool {
         self == .glass
     }
+
+    /// Dark and Glass themes require a Pro subscription.
+    var requiresPro: Bool {
+        switch self {
+        case .light: return false
+        case .dark, .glass: return true
+        }
+    }
 }
 
 enum ThemePreferences {
@@ -53,7 +61,7 @@ enum ThemePreferences {
             return t
         }
 
-        return .glass
+        return .light
     }
 
     static func save(_ theme: AppTheme) {

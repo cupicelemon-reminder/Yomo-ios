@@ -95,7 +95,7 @@ extension Color {
     static var textTertiary: Color {
         switch ThemePreferences.load() {
         case .dark:
-            return Color(hex: "#7C8291")
+            return Color(hex: "#8D93A0")
         case .glass, .light:
             return Color(hex: "#AEAEB2")
         }
@@ -109,7 +109,7 @@ extension Color {
     static var dividerColor: Color {
         switch ThemePreferences.load() {
         case .dark:
-            return Color.white.opacity(0.10)
+            return Color.white.opacity(0.14)
         case .glass, .light:
             return Color.black.opacity(0.06)
         }
@@ -201,5 +201,103 @@ extension View {
 
     func elevatedShadow() -> some View {
         self.shadow(color: Color.shadowElevatedColor, radius: 12, x: 0, y: 4)
+    }
+}
+
+// MARK: - Liquid Glass Modifier
+
+/// Reusable glass background treatment applied to all glass-themed surfaces.
+/// On iOS 26+ uses native `.glassEffect()`; on older versions falls back to
+/// `.ultraThinMaterial` with specular highlight overlays.
+struct LiquidGlassBackground: ViewModifier {
+    let cornerRadius: CGFloat
+    let isGlass: Bool
+
+    func body(content: Content) -> some View {
+        content.background(
+            ZStack {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(Color.surface)
+
+                if isGlass {
+                    glassLayer
+                }
+
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(Color.cardBorder, lineWidth: 1)
+            }
+        )
+        .glassCardShadow()
+    }
+
+    // When Xcode 26+ SDK ships, add an `if #available(iOS 26.0, *)` branch here
+    // with `.glassEffect(.regular.interactive, in: RoundedRectangle(...))`.
+    private var glassLayer: some View {
+        RoundedRectangle(cornerRadius: cornerRadius)
+            .fill(.ultraThinMaterial)
+            .overlay(liquidGlassHighlights)
+            .overlay(liquidGlassEdge)
+    }
+
+    private var liquidGlassHighlights: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(0.55),
+                    Color.white.opacity(0.12),
+                    Color.clear
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .blendMode(.screen)
+
+            RadialGradient(
+                gradient: Gradient(colors: [Color.white.opacity(0.40), Color.clear]),
+                center: .topLeading,
+                startRadius: 12,
+                endRadius: 220
+            )
+            .blendMode(.screen)
+
+            LinearGradient(
+                colors: [Color.clear, Color.black.opacity(0.05)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .blendMode(.multiply)
+        }
+        .compositingGroup()
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+    }
+
+    private var liquidGlassEdge: some View {
+        RoundedRectangle(cornerRadius: cornerRadius)
+            .strokeBorder(
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.55),
+                        Color.white.opacity(0.08),
+                        Color.black.opacity(0.08)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: 1
+            )
+            .blendMode(.overlay)
+            .opacity(0.75)
+            .compositingGroup()
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+    }
+}
+
+extension View {
+    /// Apply the standard glass card background treatment.
+    func liquidGlassBackground(
+        cornerRadius: CGFloat = CornerRadius.md,
+        isGlass: Bool
+    ) -> some View {
+        modifier(LiquidGlassBackground(cornerRadius: cornerRadius, isGlass: isGlass))
     }
 }

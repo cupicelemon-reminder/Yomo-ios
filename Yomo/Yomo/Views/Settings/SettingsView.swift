@@ -89,17 +89,18 @@ struct SettingsView: View {
                     }
                 } label: {
                     if let user = appState.currentUser {
+                        let contact = !user.email.isEmpty ? user.email : user.phone
                         SettingsRow(
                             icon: "person.circle.fill",
                             title: user.displayName,
-                            detail: user.email,
+                            detail: contact,
                             showChevron: !isSignedIn
                         )
                     } else if let firebaseUser = Auth.auth().currentUser {
                         SettingsRow(
                             icon: "person.circle.fill",
                             title: firebaseUser.displayName ?? "Account",
-                            detail: firebaseUser.email,
+                            detail: firebaseUser.email ?? firebaseUser.phoneNumber,
                             showChevron: false
                         )
                     } else {
@@ -169,17 +170,13 @@ struct SettingsView: View {
                 }
 
                 Button {
-                    if appState.isPro {
-                        showThemePicker = true
-                    } else {
-                        showPaywall = true
-                    }
+                    showThemePicker = true
                 } label: {
                     SettingsRow(
                         icon: "paintpalette.fill",
                         iconColor: .brandBlue,
                         title: "Theme",
-                        detail: appState.isPro ? appState.theme.displayName : "Pro feature",
+                        detail: appState.theme.displayName,
                         showChevron: true
                     )
                 }
@@ -397,10 +394,7 @@ private struct SignInSheetView: View {
             }
         }
         .sheet(isPresented: $viewModel.showPhoneInput) {
-            PhoneInputSheet(viewModel: viewModel)
-        }
-        .sheet(isPresented: $viewModel.showCodeInput) {
-            CodeVerificationSheet(viewModel: viewModel)
+            PhoneAuthFlowSheet(viewModel: viewModel)
         }
         .onChange(of: viewModel.isAuthenticated) { isAuthed in
             if isAuthed {
@@ -413,13 +407,7 @@ private struct SignInSheetView: View {
 private struct ThemePickerSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
-
-    private var selection: Binding<AppTheme> {
-        Binding(
-            get: { appState.theme },
-            set: { appState.updateTheme($0) }
-        )
-    }
+    @State private var showPaywall = false
 
     var body: some View {
         NavigationView {
@@ -429,26 +417,21 @@ private struct ThemePickerSheetView: View {
                     .foregroundColor(.textPrimary)
                     .padding(.top, Spacing.lg)
 
-                Picker("Theme", selection: selection) {
-                    ForEach(AppTheme.allCases) { theme in
-                        Text(theme.displayName).tag(theme)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, Spacing.lg)
-
                 VStack(alignment: .leading, spacing: Spacing.sm) {
-                    themeHint(
-                        title: "Glass",
-                        detail: "Always light. Warm glass cards, no black glass."
+                    themeOption(
+                        theme: .light,
+                        icon: "sun.max.fill",
+                        detail: "Clean light theme"
                     )
-                    themeHint(
-                        title: "Light",
-                        detail: "Clean light UI with solid cards."
+                    themeOption(
+                        theme: .glass,
+                        icon: "cube.transparent",
+                        detail: "Liquid Glass effect (Pro)"
                     )
-                    themeHint(
-                        title: "Dark",
-                        detail: "Dark UI with solid cards."
+                    themeOption(
+                        theme: .dark,
+                        icon: "moon.fill",
+                        detail: "Dark mode (Pro)"
                     )
                 }
                 .padding(.horizontal, Spacing.lg)
@@ -465,41 +448,69 @@ private struct ThemePickerSheetView: View {
                 }
             }
         }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
     }
 
-    private func themeHint(title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: Spacing.md) {
-            Image(systemName: "circle.fill")
-                .font(.system(size: 8))
-                .foregroundColor(.brandBlue)
-                .padding(.top, 6)
+    private func themeOption(theme: AppTheme, icon: String, detail: String) -> some View {
+        let isSelected = appState.theme == theme
+        let isLocked = theme.requiresPro && !appState.isPro
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.bodyRegular)
-                    .foregroundColor(.textPrimary)
-
-                Text(detail)
-                    .font(.bodySmall)
-                    .foregroundColor(.textSecondary)
+        return Button {
+            if isLocked {
+                showPaywall = true
+            } else {
+                appState.updateTheme(theme)
             }
+        } label: {
+            HStack(spacing: Spacing.md) {
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                    .foregroundColor(isSelected ? .brandBlue : .textSecondary)
+                    .frame(width: 28, height: 28)
 
-            Spacer()
-        }
-        .padding(Spacing.md)
-        .background(
-            ZStack {
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(Color.surface)
-                if appState.theme.usesGlassMaterial {
-                    RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .fill(.ultraThinMaterial)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(theme.displayName)
+                        .font(.bodyRegular)
+                        .foregroundColor(.textPrimary)
+
+                    Text(detail)
+                        .font(.bodySmall)
+                        .foregroundColor(.textSecondary)
                 }
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .stroke(Color.cardBorder, lineWidth: 1)
+
+                Spacer()
+
+                if isLocked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.textTertiary)
+                } else if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.brandBlue)
+                }
             }
-        )
-        .glassCardShadow()
+            .padding(Spacing.md)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .fill(Color.surface)
+                    if appState.theme.usesGlassMaterial {
+                        RoundedRectangle(cornerRadius: CornerRadius.md)
+                            .fill(.ultraThinMaterial)
+                    }
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .stroke(
+                            isSelected ? Color.brandBlue : Color.cardBorder,
+                            lineWidth: isSelected ? 2 : 1
+                        )
+                }
+            )
+            .glassCardShadow()
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -518,21 +529,7 @@ private struct SettingsSection<Content: View>: View {
                 .tracking(0.5)
 
             content
-                .background(
-                    ZStack {
-                        RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .fill(Color.surface)
-
-                        if appState.theme.usesGlassMaterial {
-                            RoundedRectangle(cornerRadius: CornerRadius.md)
-                                .fill(.ultraThinMaterial)
-                        }
-
-                        RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .stroke(Color.cardBorder, lineWidth: 1)
-                    }
-                )
-                .glassCardShadow()
+                .liquidGlassBackground(isGlass: appState.theme.usesGlassMaterial)
         }
     }
 }

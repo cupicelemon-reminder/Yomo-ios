@@ -22,7 +22,7 @@ class AppState: ObservableObject {
     @Published var isAuthenticated: Bool = false
     @Published var hasCompletedOnboarding: Bool = false
     @Published var currentScreen: AppScreen = .welcome
-    @Published var theme: AppTheme = .glass
+    @Published var theme: AppTheme = .light
 
     // Notification snooze navigation
     @Published var pendingSnoozeReminderId: String?
@@ -54,6 +54,11 @@ class AppState: ObservableObject {
 
         if let userDefaults = UserDefaults(suiteName: Constants.appGroupId) {
             userDefaults.set(isPro, forKey: "isPro")
+        }
+
+        // Auto-downgrade to Light if the current theme requires Pro
+        if !isPro && theme.requiresPro {
+            updateTheme(.light)
         }
     }
 
