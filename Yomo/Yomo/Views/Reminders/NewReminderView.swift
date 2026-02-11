@@ -242,6 +242,8 @@ struct NewReminderView: View {
                 .fill(fill)
         )
         .opacity((canTapParse || speechTranscriber.isRecording) ? 1 : 0.55)
+        .scaleEffect(isHoldingParse && !speechTranscriber.isRecording ? 0.92 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: isHoldingParse)
         .contentShape(Capsule())
         .gesture(
             DragGesture(minimumDistance: 0)

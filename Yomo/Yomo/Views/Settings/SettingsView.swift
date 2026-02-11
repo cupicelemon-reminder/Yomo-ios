@@ -424,11 +424,6 @@ private struct ThemePickerSheetView: View {
                         detail: "Clean light theme"
                     )
                     themeOption(
-                        theme: .glass,
-                        icon: "cube.transparent",
-                        detail: "Liquid Glass effect (Pro)"
-                    )
-                    themeOption(
                         theme: .dark,
                         icon: "moon.fill",
                         detail: "Dark mode (Pro)"

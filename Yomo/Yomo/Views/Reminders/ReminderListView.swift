@@ -167,18 +167,20 @@ struct ReminderListView: View {
                 }
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     Button {
+                        HapticManager.success()
                         viewModel.completeReminder(reminder)
                     } label: {
-                        Label("Complete", systemImage: "checkmark")
+                        Label("Done", systemImage: "checkmark.circle.fill")
                     }
-                    .tint(.successGreen)
+                    .tint(.checkGold)
                 }
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
                         viewModel.deleteReminder(reminder)
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        Label("Delete", systemImage: "trash.fill")
                     }
+                    .tint(.dangerRed.opacity(0.85))
                 }
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)

@@ -282,6 +282,8 @@ struct OnboardingView: View {
                     }
                 }
         )
+        .scaleEffect(isHoldingParse && !speechTranscriber.isRecording ? 0.92 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: isHoldingParse)
         .accessibilityLabel(speechTranscriber.isRecording ? "Stop voice input" : "Parse")
         .accessibilityHint("Tap to parse typed text. Press and hold to speak.")
     }

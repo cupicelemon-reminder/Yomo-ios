@@ -85,7 +85,9 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(appState.theme.preferredColorScheme)
-        .animation(.easeInOut(duration: 0.25), value: appState.theme)
+        // Force full view-tree rebuild so every Color.background / Color.textPrimary
+        // re-evaluates from the new ThemePreferences value.
+        .id(appState.theme)
         .task {
             await SubscriptionService.shared.checkSubscriptionStatus()
             await DeviceSyncService.shared.refreshFCMToken()
