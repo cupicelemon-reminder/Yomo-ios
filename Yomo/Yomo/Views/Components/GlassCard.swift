@@ -75,6 +75,8 @@ struct GlassCard<Content: View>: View {
             )
             .blendMode(.multiply)
         }
+        // Helps blend modes behave predictably within this overlay.
+        .compositingGroup()
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
     }
 
@@ -94,6 +96,7 @@ struct GlassCard<Content: View>: View {
             )
             .blendMode(.overlay)
             .opacity(0.75)
+            .compositingGroup()
             .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
     }
 }
