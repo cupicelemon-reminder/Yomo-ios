@@ -16,11 +16,20 @@ enum Constants {
     // MARK: - Firebase
     static let firebaseProjectId = "yomo-6340e"
 
-    // MARK: - RevenueCat
-    // Keep this empty in the public repo; set locally for testing.
-    static let revenueCatAPIKey = ""
+    // MARK: - RevenueCat (fallback keys if build settings are not configured)
+    // Build setting priority:
+    // - Debug:   REVENUECAT_TEST_STORE_API_KEY
+    // - Release: REVENUECAT_IOS_API_KEY
+    //
+    // The app reads REVENUECAT_API_KEY from Info.plist first and falls back to this value.
+    #if DEBUG
+    static let revenueCatAPIKey = "" // Test Store key for local debug
+    #else
+    static let revenueCatAPIKey = "" // iOS App Store key for TestFlight/Release
+    #endif
 
     // MARK: - AI Services
+    static let openRouterAPIKey = "" // TODO: Add OpenRouter API key
     static let claudeAPIKey = "" // TODO: Add Anthropic API key
     static let openaiAPIKey = "" // TODO: Add OpenAI API key
 

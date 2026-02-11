@@ -12,6 +12,14 @@ struct WelcomeView: View {
     @State private var animateContent = false
     @State private var logoFloat = false
 
+    private var showInternalTools: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-YOMOInternalTools")
+        #else
+        return false
+        #endif
+    }
+
     var body: some View {
         ZStack {
             GradientBackground()
@@ -65,15 +73,17 @@ struct WelcomeView: View {
                     }
 
                     #if DEBUG
-                    Button(action: { viewModel.devLogin() }) {
-                        HStack(spacing: Spacing.sm) {
-                            Image(systemName: "hammer.fill")
-                                .font(.system(size: 14))
-                            Text("Dev Login (Skip Auth)")
-                                .font(.bodySmall)
+                    if showInternalTools {
+                        Button(action: { viewModel.devLogin() }) {
+                            HStack(spacing: Spacing.sm) {
+                                Image(systemName: "hammer.fill")
+                                    .font(.system(size: 14))
+                                Text("Dev Login (Skip Auth)")
+                                    .font(.bodySmall)
+                            }
+                            .foregroundColor(.textTertiary)
+                            .padding(.vertical, Spacing.xs)
                         }
-                        .foregroundColor(.textTertiary)
-                        .padding(.vertical, Spacing.xs)
                     }
                     #endif
                 }
@@ -115,10 +125,7 @@ struct WelcomeView: View {
             }
         }
         .sheet(isPresented: $viewModel.showPhoneInput) {
-            PhoneInputSheet(viewModel: viewModel)
-        }
-        .sheet(isPresented: $viewModel.showCodeInput) {
-            CodeVerificationSheet(viewModel: viewModel)
+            PhoneAuthFlowSheet(viewModel: viewModel)
         }
         .onAppear {
             withAnimation(.easeOut(duration: 0.8)) {
@@ -166,81 +173,6 @@ private let popularCountryCodes: [CountryCode] = [
     CountryCode(flag: "🇲🇾", name: "Malaysia", code: "+60"),
     CountryCode(flag: "🇳🇿", name: "New Zealand", code: "+64"),
 ]
-
-// MARK: - Phone Input Sheet with Country Code Picker
-struct PhoneInputSheet: View {
-    @ObservedObject var viewModel: AuthViewModel
-    @Environment(\.dismiss) var dismiss
-    @State private var selectedCountry = popularCountryCodes[0]
-    @State private var showCountryPicker = false
-    @State private var localNumber = ""
-
-    var body: some View {
-        NavigationView {
-            VStack(spacing: Spacing.lg) {
-                Text("Enter your phone number")
-                    .font(.titleMedium)
-                    .foregroundColor(.textPrimary)
-
-                HStack(spacing: Spacing.sm) {
-                    // Country code button
-                    Button {
-                        showCountryPicker = true
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text(selectedCountry.flag)
-                                .font(.system(size: 20))
-                            Text(selectedCountry.code)
-                                .font(.bodyRegular)
-                                .foregroundColor(.textPrimary)
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundColor(.textTertiary)
-                        }
-                        .padding(.horizontal, Spacing.sm + 2)
-                        .padding(.vertical, Spacing.sm + 2)
-                        .background(
-                            RoundedRectangle(cornerRadius: CornerRadius.sm + 2)
-                                .fill(Color.brandBlueBg)
-                        )
-                    }
-
-                    // Phone number input
-                    TextField("Phone number", text: $localNumber)
-                        .keyboardType(.phonePad)
-                        .font(.bodyRegular)
-                        .padding(.horizontal, Spacing.md)
-                        .padding(.vertical, Spacing.sm + 2)
-                        .background(
-                            RoundedRectangle(cornerRadius: CornerRadius.sm + 2)
-                                .fill(Color.brandBlueBg)
-                        )
-                }
-                .padding(.horizontal, Spacing.lg)
-
-                PrimaryButton(
-                    "Send Code",
-                    isLoading: viewModel.isLoading,
-                    isDisabled: localNumber.isEmpty
-                ) {
-                    viewModel.phoneNumber = selectedCountry.code + localNumber
-                    viewModel.startPhoneAuth()
-                }
-                .padding(.horizontal, Spacing.lg)
-
-                Spacer()
-            }
-            .padding(.top, Spacing.xl)
-            .navigationBarItems(trailing: Button("Cancel") { dismiss() })
-            .sheet(isPresented: $showCountryPicker) {
-                CountryPickerSheet(
-                    selectedCountry: $selectedCountry,
-                    isPresented: $showCountryPicker
-                )
-            }
-        }
-    }
-}
 
 // MARK: - Country Picker Sheet
 private struct CountryPickerSheet: View {
@@ -294,20 +226,132 @@ private struct CountryPickerSheet: View {
     }
 }
 
-// MARK: - Code Verification Sheet
-struct CodeVerificationSheet: View {
+// MARK: - Phone Auth Flow Sheet
+struct PhoneAuthFlowSheet: View {
     @ObservedObject var viewModel: AuthViewModel
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.dismiss) private var dismiss
+    @FocusState private var focusedField: FocusedField?
+
+    @State private var step: Step = .enterPhone
+    @State private var selectedCountry = popularCountryCodes[0]
+    @State private var showCountryPicker = false
+    @State private var localNumber = ""
+
+    private enum Step {
+        case enterPhone
+        case enterCode
+    }
+
+    private enum FocusedField {
+        case phone
+        case code
+    }
+
+    private var localDigits: String {
+        localNumber.filter(\.isNumber)
+    }
+
+    private var fullPhoneNumber: String {
+        selectedCountry.code + localDigits
+    }
+
+    private var isSendDisabled: Bool {
+        localDigits.isEmpty
+    }
+
+    private var isVerifyDisabled: Bool {
+        viewModel.verificationCode.count != 6
+    }
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: Spacing.lg) {
-                Text("Enter verification code")
+        NavigationStack {
+            ZStack {
+                Color.background.ignoresSafeArea()
+
+                VStack(spacing: Spacing.lg) {
+                    switch step {
+                    case .enterPhone:
+                        phoneStep
+                    case .enterCode:
+                        codeStep
+                    }
+                }
+                .padding(.top, Spacing.xl)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundColor(.brandBlue)
+                }
+
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if step == .enterCode {
+                        Button("Back") { backToPhone() }
+                            .foregroundColor(.brandBlue)
+                    }
+                }
+            }
+            .sheet(isPresented: $showCountryPicker) {
+                CountryPickerSheet(
+                    selectedCountry: $selectedCountry,
+                    isPresented: $showCountryPicker
+                )
+            }
+        }
+        .onAppear {
+            resetFlow()
+        }
+        .onChange(of: viewModel.verificationID) { verificationID in
+            guard verificationID != nil else { return }
+            step = .enterCode
+            focusedField = .code
+        }
+        .onChange(of: viewModel.isAuthenticated) { isAuthed in
+            if isAuthed {
+                dismiss()
+            }
+        }
+    }
+
+    private var phoneStep: some View {
+        VStack(spacing: Spacing.lg) {
+            VStack(spacing: Spacing.xs) {
+                Text("Enter your phone number")
                     .font(.titleMedium)
                     .foregroundColor(.textPrimary)
 
-                TextField("123456", text: $viewModel.verificationCode)
-                    .keyboardType(.numberPad)
+                Text("We'll send a 6-digit code via SMS.")
+                    .font(.bodySmall)
+                    .foregroundColor(.textSecondary)
+            }
+
+            HStack(spacing: Spacing.sm) {
+                Button {
+                    showCountryPicker = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(selectedCountry.flag)
+                            .font(.system(size: 20))
+                        Text(selectedCountry.code)
+                            .font(.bodyRegular)
+                            .foregroundColor(.textPrimary)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.textTertiary)
+                    }
+                    .padding(.horizontal, Spacing.sm + 2)
+                    .padding(.vertical, Spacing.sm + 2)
+                    .background(
+                        RoundedRectangle(cornerRadius: CornerRadius.sm + 2)
+                            .fill(Color.brandBlueBg)
+                    )
+                }
+
+                TextField("Phone number", text: $localNumber)
+                    .keyboardType(.phonePad)
+                    .textContentType(.telephoneNumber)
+                    .focused($focusedField, equals: .phone)
                     .font(.bodyRegular)
                     .padding(.horizontal, Spacing.md)
                     .padding(.vertical, Spacing.sm + 2)
@@ -315,22 +359,132 @@ struct CodeVerificationSheet: View {
                         RoundedRectangle(cornerRadius: CornerRadius.sm + 2)
                             .fill(Color.brandBlueBg)
                     )
-                    .padding(.horizontal, Spacing.lg)
-
-                PrimaryButton(
-                    "Verify",
-                    isLoading: viewModel.isLoading,
-                    isDisabled: viewModel.verificationCode.isEmpty
-                ) {
-                    viewModel.verifyCode()
-                }
-                .padding(.horizontal, Spacing.lg)
-
-                Spacer()
+                    .onChange(of: localNumber) { newValue in
+                        let filtered = String(newValue.filter(\.isNumber).prefix(15))
+                        if filtered != newValue {
+                            localNumber = filtered
+                        }
+                    }
             }
-            .padding(.top, Spacing.xl)
-            .navigationBarItems(trailing: Button("Cancel") { dismiss() })
+            .padding(.horizontal, Spacing.lg)
+
+            if let error = viewModel.errorMessage {
+                Text(error)
+                    .font(.bodySmall)
+                    .foregroundColor(.dangerRed)
+                    .padding(Spacing.sm)
+                    .background(
+                        RoundedRectangle(cornerRadius: CornerRadius.sm)
+                            .fill(Color.dangerRed.opacity(0.1))
+                    )
+                    .padding(.horizontal, Spacing.lg)
+            }
+
+            PrimaryButton(
+                "Send Code",
+                isLoading: viewModel.isLoading,
+                isDisabled: isSendDisabled
+            ) {
+                viewModel.phoneNumber = fullPhoneNumber
+                viewModel.startPhoneAuth()
+            }
+            .padding(.horizontal, Spacing.lg)
+
+            Spacer()
         }
+        .onAppear {
+            focusedField = .phone
+        }
+    }
+
+    private var codeStep: some View {
+        VStack(spacing: Spacing.lg) {
+            VStack(spacing: Spacing.xs) {
+                Text("Enter verification code")
+                    .font(.titleMedium)
+                    .foregroundColor(.textPrimary)
+
+                if !viewModel.phoneNumber.isEmpty {
+                    Text("Sent to \(viewModel.phoneNumber)")
+                        .font(.bodySmall)
+                        .foregroundColor(.textSecondary)
+                }
+            }
+
+            TextField("123456", text: $viewModel.verificationCode)
+                .keyboardType(.numberPad)
+                .textContentType(.oneTimeCode)
+                .focused($focusedField, equals: .code)
+                .font(.bodyRegular)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm + 2)
+                .background(
+                    RoundedRectangle(cornerRadius: CornerRadius.sm + 2)
+                        .fill(Color.brandBlueBg)
+                )
+                .padding(.horizontal, Spacing.lg)
+                .onChange(of: viewModel.verificationCode) { newValue in
+                    let filtered = String(newValue.filter(\.isNumber).prefix(6))
+                    if filtered != newValue {
+                        viewModel.verificationCode = filtered
+                    }
+                }
+
+            if let error = viewModel.errorMessage {
+                Text(error)
+                    .font(.bodySmall)
+                    .foregroundColor(.dangerRed)
+                    .padding(Spacing.sm)
+                    .background(
+                        RoundedRectangle(cornerRadius: CornerRadius.sm)
+                            .fill(Color.dangerRed.opacity(0.1))
+                    )
+                    .padding(.horizontal, Spacing.lg)
+            }
+
+            PrimaryButton(
+                "Verify",
+                isLoading: viewModel.isLoading,
+                isDisabled: isVerifyDisabled
+            ) {
+                viewModel.verifyCode()
+            }
+            .padding(.horizontal, Spacing.lg)
+
+            Button {
+                viewModel.errorMessage = nil
+                viewModel.startPhoneAuth()
+            } label: {
+                Text("Resend Code")
+                    .font(.bodySmall)
+                    .foregroundColor(.brandBlue)
+            }
+            .disabled(viewModel.isLoading || viewModel.phoneNumber.isEmpty)
+            .padding(.top, Spacing.xs)
+
+            Spacer()
+        }
+        .onAppear {
+            focusedField = .code
+        }
+    }
+
+    private func resetFlow() {
+        step = .enterPhone
+        selectedCountry = popularCountryCodes[0]
+        localNumber = ""
+        viewModel.phoneNumber = ""
+        viewModel.verificationCode = ""
+        viewModel.verificationID = nil
+        viewModel.errorMessage = nil
+    }
+
+    private func backToPhone() {
+        step = .enterPhone
+        viewModel.verificationCode = ""
+        viewModel.verificationID = nil
+        viewModel.errorMessage = nil
+        focusedField = .phone
     }
 }
 

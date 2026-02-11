@@ -149,6 +149,7 @@ final class AuthService: ObservableObject {
             id: user.uid,
             displayName: user.displayName ?? "User",
             email: user.email ?? "",
+            phone: user.phoneNumber,
             photoURL: user.photoURL?.absoluteString,
             createdAt: Timestamp(date: Date())
         )
@@ -160,6 +161,7 @@ final class AuthService: ObservableObject {
                 let profileData: [String: Any] = [
                     "displayName": user.displayName ?? "User",
                     "email": user.email ?? "",
+                    "phone": user.phoneNumber ?? "",
                     "photoURL": user.photoURL?.absoluteString ?? "",
                     "createdAt": Timestamp(date: Date())
                 ]
@@ -171,6 +173,24 @@ final class AuthService: ObservableObject {
                     "plan": NSNull(),
                     "expiresAt": NSNull()
                 ])
+            } else {
+                // Backfill missing profile fields when a user signs in with a new provider.
+                var updates: [String: Any] = [:]
+                let data = snapshot.data() ?? [:]
+
+                if (data["email"] == nil || (data["email"] as? String)?.isEmpty == true),
+                   let email = user.email, !email.isEmpty {
+                    updates["email"] = email
+                }
+
+                if (data["phone"] == nil || (data["phone"] as? String)?.isEmpty == true),
+                   let phone = user.phoneNumber, !phone.isEmpty {
+                    updates["phone"] = phone
+                }
+
+                if !updates.isEmpty {
+                    try await userRef.setData(updates, merge: true)
+                }
             }
 
             let fetchedData = try await userRef.getDocument().data()
@@ -179,6 +199,7 @@ final class AuthService: ObservableObject {
                     id: user.uid,
                     displayName: data["displayName"] as? String ?? "",
                     email: data["email"] as? String ?? "",
+                    phone: data["phone"] as? String,
                     photoURL: data["photoURL"] as? String,
                     createdAt: data["createdAt"] as? Timestamp ?? Timestamp(date: Date())
                 )

@@ -147,20 +147,36 @@ Create and edit `Yomo/Yomo/Core/Constants.swift` (do not commit real keys to a p
 
 ```swift
 enum Constants {
-    static let bundleId = "com.yomo.Yomo"
-    static let appGroupId = "group.com.yomo.Yomo"
+    static let bundleId = "com.binye.Yomo"
+    static let appGroupId = "group.com.binye.Yomo"
     static let notificationCategoryId = "YOMO_REMINDER"
 
+    // Fallback only. Build settings override this automatically.
     static let revenueCatAPIKey = "YOUR_REVENUECAT_KEY"
+    static let openRouterAPIKey = "YOUR_OPENROUTER_KEY"
     static let claudeAPIKey = "YOUR_ANTHROPIC_KEY"
     static let openaiAPIKey = "YOUR_OPENAI_KEY"
 }
 ```
 
+### RevenueCat Dual-Track Setup (Implemented)
+
+The app now switches RevenueCat keys by build configuration:
+- `Debug` uses `REVENUECAT_TEST_STORE_API_KEY` (Test Store)
+- `Release/TestFlight` uses `REVENUECAT_IOS_API_KEY` (Apple Sandbox / App Store key)
+
+Set these in Xcode Build Settings (target `Yomo`):
+- `REVENUECAT_TEST_STORE_API_KEY`
+- `REVENUECAT_IOS_API_KEY`
+
+Do not submit production builds with a Test Store key.
+The project includes a build-phase gate (`RevenueCat Release Gate`) that fails non-Debug builds if they look like Test Store builds.
+
 ## 📖 Documentation
 
 - [MVP PRD](Yomo_MVP_PRD.md)
 - [Design Specification](Yomo_Final_Design_Spec.md)
+- [Billing Testing Checklist](docs/billing-testing-checklist.md)
 
 ## 🎨 Design System
 
@@ -173,12 +189,14 @@ Based on modern iOS design principles with glassmorphic UI:
 
 ## 🧪 Testing
 
-### Day 1 Test Checklist
-- [ ] App launches without crashes
-- [ ] Welcome screen displays correctly
-- [ ] Google Sign-In flow completes
-- [ ] User profile created in Firestore
-- [ ] Firebase connection verified
+### Billing Regression Checklist
+- [ ] Test Store: purchase success updates `CustomerInfo` and `isPro`
+- [ ] Test Store: purchase failure path shows correct UI state
+- [ ] Test Store: purchase cancel path leaves entitlement unchanged
+- [ ] Apple Sandbox (TestFlight): first purchase succeeds
+- [ ] Apple Sandbox (TestFlight): restore purchases reactivates entitlement
+- [ ] Apple Sandbox (TestFlight): renewal/expiration transitions update entitlement correctly
+- [ ] Mixed scenario: reinstall + login on second device keeps subscription state consistent
 
 ## 📝 License
 

@@ -331,8 +331,8 @@ This is a minimal fallback — not the primary snooze experience in MVP.
 
 ### 5.2 Pricing
 
-- **Monthly:** $2.99/month
-- **Annual:** $19.99/year (save 44%)
+- **Monthly:** $4.99/month
+- **Annual:** $39.99/year (save 33%)
 - **Free Trial:** 3-day free trial on both plans
 
 ### 5.3 Paywall Trigger Points

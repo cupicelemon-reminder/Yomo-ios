@@ -15,6 +15,22 @@ import UserNotifications
 import RevenueCat
 
 class AppDelegate: NSObject, UIApplicationDelegate {
+    /// Firebase uses AppDelegate/SceneDelegate swizzling by default unless
+    /// `FirebaseAppDelegateProxyEnabled` is explicitly set to `NO`/`false` in Info.plist.
+    /// When swizzling is enabled, Firebase Auth & Messaging will automatically observe APNs
+    /// callbacks, so we should not manually forward them.
+    private var isFirebaseAppDelegateProxyEnabled: Bool {
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "FirebaseAppDelegateProxyEnabled")
+        else {
+            return true
+        }
+
+        if let b = raw as? Bool { return b }
+        if let n = raw as? NSNumber { return n.boolValue }
+        if let s = raw as? String { return (s as NSString).boolValue }
+        return true
+    }
+
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
@@ -25,9 +41,17 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         }
 
         // Initialize RevenueCat
-        if !Constants.revenueCatAPIKey.isEmpty {
+        if RevenueCatConfig.hasAPIKey {
+            guard RevenueCatConfig.isReleaseConfigurationValid else {
+                // Safety fallback: if a release build is misconfigured, avoid initializing purchases.
+                return true
+            }
+            #if DEBUG
             Purchases.logLevel = .debug
-            Purchases.configure(withAPIKey: Constants.revenueCatAPIKey)
+            #else
+            Purchases.logLevel = .error
+            #endif
+            Purchases.configure(withAPIKey: RevenueCatConfig.apiKey)
         }
 
         // Register for remote notifications (for FCM)
@@ -62,7 +86,21 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
     ) {
+        // Always provide the APNs token to FCM when we implement this callback.
         Messaging.messaging().apnsToken = deviceToken
+
+        // Only forward APNs token to Firebase Auth when AppDelegate swizzling is disabled.
+        // With swizzling enabled, Firebase Auth will observe APNs callbacks automatically.
+        //
+        // This also avoids a crash in FirebaseAuth (12.9.0) when the internal APNs token manager
+        // has not completed initialization yet.
+        if !isFirebaseAppDelegateProxyEnabled, FirebaseApp.app() != nil {
+            #if DEBUG
+            Auth.auth().setAPNSToken(deviceToken, type: .sandbox)
+            #else
+            Auth.auth().setAPNSToken(deviceToken, type: .prod)
+            #endif
+        }
 
         // Now that APNS token is set, FCM token can be generated/refreshed.
         Task {
@@ -75,6 +113,13 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         didReceiveRemoteNotification userInfo: [AnyHashable: Any],
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
+        // If AppDelegate swizzling is disabled, forward Auth-related pushes for Phone Auth.
+        if !isFirebaseAppDelegateProxyEnabled, FirebaseApp.app() != nil,
+           Auth.auth().canHandleNotification(userInfo) {
+            completionHandler(.noData)
+            return
+        }
+
         // Handle FCM silent pushes for cross-device notification sync.
         Task {
             await DeviceSyncService.shared.handleSilentPush(userInfo: userInfo)

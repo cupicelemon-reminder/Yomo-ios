@@ -8,6 +8,7 @@
 xcuserdata/
 *.moved-aside
 DerivedData/
+.derivedData/
 *.hmap
 *.ipa
 *.dSYM.zip
@@ -90,3 +91,5 @@ THE BRIEFS（这个是我选的brief).md
 Yomo_Developer_Bio.md
 Yomo_Proposal.md
 Yomo_Technical_Documentation.md
+
+

@@ -23,6 +23,14 @@ struct SettingsView: View {
         Auth.auth().currentUser != nil
     }
 
+    private var showInternalTools: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-YOMOInternalTools")
+        #else
+        return false
+        #endif
+    }
+
     var body: some View {
         NavigationView {
             ScrollView {
@@ -40,7 +48,9 @@ struct SettingsView: View {
                     aboutSection
 
                     #if DEBUG
-                    debugSection
+                    if showInternalTools {
+                        debugSection
+                    }
                     #endif
 
                     // Sign out
@@ -317,6 +327,14 @@ private struct SignInSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = AuthViewModel()
 
+    private var showInternalTools: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-YOMOInternalTools")
+        #else
+        return false
+        #endif
+    }
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -348,15 +366,17 @@ private struct SignInSheetView: View {
                         }
 
                         #if DEBUG
-                        Button(action: { viewModel.devLogin(); dismiss() }) {
-                            HStack(spacing: Spacing.sm) {
-                                Image(systemName: "hammer.fill")
-                                    .font(.system(size: 14))
-                                Text("Dev Login (Skip Auth)")
-                                    .font(.bodySmall)
+                        if showInternalTools {
+                            Button(action: { viewModel.devLogin(); dismiss() }) {
+                                HStack(spacing: Spacing.sm) {
+                                    Image(systemName: "hammer.fill")
+                                        .font(.system(size: 14))
+                                    Text("Dev Login (Skip Auth)")
+                                        .font(.bodySmall)
+                                }
+                                .foregroundColor(.textTertiary)
+                                .padding(.vertical, Spacing.xs)
                             }
-                            .foregroundColor(.textTertiary)
-                            .padding(.vertical, Spacing.xs)
                         }
                         #endif
                     }

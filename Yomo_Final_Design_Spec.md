@@ -49,7 +49,7 @@ Yomo combines glassmorphism's depth and premium feel with a warm, friendly perso
 | `brand-blue` | #4A90D9 | Primary interaction color | FAB, CTA buttons, selected pills, active toggles, links, slider fill |
 | `brand-blue-light` | #7AB8F5 | Secondary blue | Recurrence icon, slider track accent, hover states |
 | `brand-blue-bg` | #EBF3FC | Input/field background | Text fields, unselected pills, number inputs |
-| `check-gold` | #F5A623 | Achievement / reward | Completion checkmark, Pro ⭐ badge, "SAVE 44%" badge, onboarding celebration circle |
+| `check-gold` | #F5A623 | Achievement / reward | Completion checkmark, Pro ⭐ badge, "SAVE 33%" badge, onboarding celebration circle |
 | `background` | #F8F9FB | Screen background | All screens (solid, no pattern) |
 | `card-glass` | rgba(255, 255, 255, 0.72) | Glass card fill | Reminder cards, bottom sheets, settings sections |
 | `card-border` | rgba(255, 255, 255, 0.3) | Glass card edge | 1px border on all glass cards |
@@ -99,7 +99,7 @@ All fonts: **SF Pro** (iOS system font family).
 | Pill buttons (recurrence, Parse) | 20px (fully rounded) |
 | Input fields | 10px |
 | FAB button | 50% (circle) |
-| Badges (SAVE 44%, Pro, Overdue) | 6px |
+| Badges (SAVE 33%, Pro, Overdue) | 6px |
 | Day-of-week circles | 50% (circle) |
 
 ### 2.5 Glass Effect Specification
@@ -449,9 +449,9 @@ Reminders grouped by time, each group has:
 
 | Attribute | Monthly | Annual |
 |---|---|---|
-| Price | "$2.99" `title-small` | "$19.99" `title-small` |
+| Price | "$4.99" `title-small` | "$39.99" `title-small` |
 | Label | "per month" `caption` `text-secondary` | "per year" `caption` `text-secondary` |
-| Badge | — | "SAVE 44%" top-right, `check-gold` bg, white text, `caption`, 6px radius |
+| Badge | — | "SAVE 33%" top-right, `check-gold` bg, white text, `caption`, 6px radius |
 | Default state | Unselected | Selected (highlighted) |
 | Unselected style | `brand-blue-bg` bg, no border | `brand-blue-bg` bg, no border |
 | Selected style | `brand-blue-bg` bg, 2px `brand-blue` border | `brand-blue-bg` bg, 2px `brand-blue` border |

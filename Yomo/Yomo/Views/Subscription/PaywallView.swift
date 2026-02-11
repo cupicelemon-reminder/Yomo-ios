@@ -14,6 +14,10 @@ struct PaywallView: View {
     @State private var selectedPlan: PlanType = .annual
     @State private var isRestoring = false
 
+    private let monthlyFallbackPrice = "US$4.99"
+    private let annualFallbackPrice = "US$39.99"
+    private let annualBadgeText = "SAVE 33%"
+
     enum PlanType {
         case monthly
         case annual
@@ -142,7 +146,7 @@ struct PaywallView: View {
                 price: annualPrice,
                 period: "/year",
                 isSelected: selectedPlan == .annual,
-                badge: "SAVE 40%"
+                badge: annualBadgeText
             ) {
                 selectedPlan = .annual
             }
@@ -199,7 +203,7 @@ struct PaywallView: View {
            let monthly = offering.monthly {
             return monthly.localizedPriceString
         }
-        return "$4.99"
+        return monthlyFallbackPrice
     }
 
     private var annualPrice: String {
@@ -207,7 +211,7 @@ struct PaywallView: View {
            let annual = offering.annual {
             return annual.localizedPriceString
         }
-        return "$35.99"
+        return annualFallbackPrice
     }
 
     // MARK: - Actions

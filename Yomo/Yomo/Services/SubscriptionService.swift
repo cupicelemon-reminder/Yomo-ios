@@ -24,10 +24,14 @@ final class SubscriptionService: ObservableObject {
     // MARK: - Check Entitlements
 
     func checkSubscriptionStatus() async {
-        guard !Constants.revenueCatAPIKey.isEmpty else { return }
+        guard RevenueCatConfig.hasAPIKey else { return }
 
         do {
             let customerInfo = try await Purchases.shared.customerInfo()
+            #if DEBUG
+            let activeEntitlements = customerInfo.entitlements.active.keys.sorted().joined(separator: ", ")
+            print("[SubscriptionService] Active entitlements: \(activeEntitlements)")
+            #endif
             let hasProAccess = customerInfo.entitlements["pro"]?.isActive == true
             updateProStatus(hasProAccess)
         } catch {
@@ -38,7 +42,7 @@ final class SubscriptionService: ObservableObject {
     // MARK: - Fetch Offerings
 
     func fetchOfferings() async {
-        guard !Constants.revenueCatAPIKey.isEmpty else { return }
+        guard RevenueCatConfig.hasAPIKey else { return }
 
         isLoading = true
         errorMessage = nil
@@ -56,14 +60,21 @@ final class SubscriptionService: ObservableObject {
     // MARK: - Purchase
 
     func purchase(package: Package) async -> Bool {
-        guard !Constants.revenueCatAPIKey.isEmpty else { return false }
+        guard RevenueCatConfig.hasAPIKey else { return false }
 
         isLoading = true
         errorMessage = nil
 
         do {
             let result = try await Purchases.shared.purchase(package: package)
+            #if DEBUG
+            let activeEntitlements = result.customerInfo.entitlements.active.keys.sorted().joined(separator: ", ")
+            print("[SubscriptionService] Purchase active entitlements: \(activeEntitlements)")
+            #endif
             let hasProAccess = result.customerInfo.entitlements["pro"]?.isActive == true
+            if !hasProAccess {
+                errorMessage = "Purchase finished, but 'pro' entitlement is not active. Check RevenueCat entitlement/product mapping."
+            }
             updateProStatus(hasProAccess)
             isLoading = false
             return hasProAccess
@@ -81,14 +92,21 @@ final class SubscriptionService: ObservableObject {
     // MARK: - Restore Purchases
 
     func restorePurchases() async -> Bool {
-        guard !Constants.revenueCatAPIKey.isEmpty else { return false }
+        guard RevenueCatConfig.hasAPIKey else { return false }
 
         isLoading = true
         errorMessage = nil
 
         do {
             let customerInfo = try await Purchases.shared.restorePurchases()
+            #if DEBUG
+            let activeEntitlements = customerInfo.entitlements.active.keys.sorted().joined(separator: ", ")
+            print("[SubscriptionService] Restore active entitlements: \(activeEntitlements)")
+            #endif
             let hasProAccess = customerInfo.entitlements["pro"]?.isActive == true
+            if !hasProAccess {
+                errorMessage = "Restore finished, but 'pro' entitlement is not active."
+            }
             updateProStatus(hasProAccess)
             isLoading = false
             return hasProAccess
@@ -102,7 +120,7 @@ final class SubscriptionService: ObservableObject {
     // MARK: - Login with RevenueCat
 
     func loginUser(userId: String) async {
-        guard !Constants.revenueCatAPIKey.isEmpty else { return }
+        guard RevenueCatConfig.hasAPIKey else { return }
 
         do {
             let (customerInfo, _) = try await Purchases.shared.logIn(userId)
@@ -114,7 +132,7 @@ final class SubscriptionService: ObservableObject {
     }
 
     func logoutUser() async {
-        guard !Constants.revenueCatAPIKey.isEmpty else { return }
+        guard RevenueCatConfig.hasAPIKey else { return }
 
         do {
             let customerInfo = try await Purchases.shared.logOut()

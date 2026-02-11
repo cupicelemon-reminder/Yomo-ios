@@ -12,6 +12,7 @@ struct UserProfile: Codable, Identifiable {
     @DocumentID var id: String?
     let displayName: String
     let email: String
+    let phone: String?
     let photoURL: String?
     let createdAt: Timestamp
 
@@ -19,6 +20,7 @@ struct UserProfile: Codable, Identifiable {
         case id
         case displayName
         case email
+        case phone
         case photoURL
         case createdAt
     }
