@@ -120,7 +120,7 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
         snoozeButton.addTarget(self, action: #selector(snoozeTapped), for: .touchUpInside)
 
         // Complete button
-        completeButton.setTitle("  Done", for: .normal)
+        completeButton.setTitle("  Complete", for: .normal)
         completeButton.setImage(UIImage(systemName: "checkmark"), for: .normal)
         completeButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
         completeButton.backgroundColor = goldBg
@@ -212,6 +212,9 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
         let snoozeDate = Date().addingTimeInterval(TimeInterval(snoozeMinutes * 60))
         updateReminderSnooze(reminderId: reminderId, snoozeDate: snoozeDate)
 
+        // Queue a pending action so the main app can sync to Firestore
+        appendPendingAction(type: "snooze", reminderId: reminderId, snoozeDate: snoozeDate)
+
         updateAppBadgeFromStore()
 
         // Dismiss notification WITHOUT opening the app
@@ -225,6 +228,9 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
 
         // Mark complete in shared storage
         completeReminderInStore(reminderId: reminderId)
+
+        // Queue a pending action so the main app can sync to Firestore
+        appendPendingAction(type: "complete", reminderId: reminderId)
 
         updateAppBadgeFromStore()
 
@@ -327,6 +333,23 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
         if #available(iOSApplicationExtension 16.0, *) {
             UNUserNotificationCenter.current().setBadgeCount(count)
         }
+    }
+
+    // MARK: - Pending Actions Queue
+
+    private let pendingActionsKey = "yomo_pending_extension_actions"
+
+    /// Append an action so the main app can replay it against Firestore on next launch.
+    private func appendPendingAction(type: String, reminderId: String, snoozeDate: Date? = nil) {
+        guard let defaults = UserDefaults(suiteName: appGroupId) else { return }
+        var actions = defaults.array(forKey: pendingActionsKey) as? [[String: Any]] ?? []
+        var entry: [String: Any] = ["type": type, "reminderId": reminderId]
+        if let snoozeDate {
+            entry["snoozeDate"] = snoozeDate.timeIntervalSince1970
+        }
+        actions.append(entry)
+        defaults.set(actions, forKey: pendingActionsKey)
+        defaults.synchronize()
     }
 
     private func calculateNextDate(from date: Date, interval: Int, unit: String) -> Date {

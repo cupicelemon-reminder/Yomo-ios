@@ -168,4 +168,65 @@ class ReminderViewModel: ObservableObject {
         }
         lastActiveReminderIds = newIds
     }
+
+    /// Process snooze/complete actions queued by the notification content extension.
+    /// For local mode the shared UserDefaults is already updated; this handles Firebase sync.
+    func processPendingExtensionActions() {
+        // Always reload local data first (picks up extension writes for local mode)
+        localStore.reloadFromDisk()
+
+        let pendingActions = localStore.consumePendingExtensionActions()
+        guard !pendingActions.isEmpty, !isLocalMode else { return }
+
+        // Firebase mode — replay each action against Firestore
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+
+        for action in pendingActions {
+            let ref = db.collection("users").document(userId)
+                .collection("reminders").document(action.reminderId)
+
+            switch action.type {
+            case "snooze":
+                guard let snoozeDate = action.snoozeDate else { continue }
+                Task {
+                    try? await ref.updateData([
+                        "snoozedUntil": Timestamp(date: snoozeDate),
+                        "updatedAt": Timestamp(date: Date())
+                    ])
+                }
+            case "complete":
+                Task {
+                    do {
+                        let doc = try await ref.getDocument()
+                        let recurrenceData = doc.data()?["recurrence"] as? [String: Any]
+                        let recurrenceType = recurrenceData?["type"] as? String
+
+                        if let recurrenceType, recurrenceType != "none" {
+                            let triggerDate = (doc.data()?["triggerDate"] as? Timestamp)?.dateValue() ?? Date()
+                            let interval = recurrenceData?["interval"] as? Int ?? 1
+                            let unit = recurrenceData?["unit"] as? String ?? "day"
+                            let nextDate = AppDelegate.calculateNextDate(
+                                from: triggerDate, interval: interval, unit: unit
+                            )
+                            try await ref.updateData([
+                                "triggerDate": Timestamp(date: nextDate),
+                                "snoozedUntil": FieldValue.delete(),
+                                "updatedAt": Timestamp(date: Date())
+                            ])
+                        } else {
+                            try await ref.updateData([
+                                "status": "completed",
+                                "updatedAt": Timestamp(date: Date())
+                            ])
+                        }
+                    } catch {
+                        // Extension action sync failed silently
+                    }
+                }
+            default:
+                break
+            }
+        }
+    }
 }

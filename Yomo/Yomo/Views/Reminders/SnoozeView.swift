@@ -96,7 +96,7 @@ struct SnoozeView: View {
                         HStack(spacing: Spacing.sm) {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 16, weight: .semibold))
-                            Text("Done")
+                            Text("Complete")
                                 .font(.button)
                         }
                         .foregroundColor(.checkGold)

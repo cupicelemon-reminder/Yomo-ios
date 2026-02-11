@@ -216,7 +216,32 @@ final class LocalReminderStore {
     /// Call this when returning to foreground, since the notification extension
     /// may have snoozed/completed reminders while the app was in background.
     func reloadFromDisk() {
+        // Force UserDefaults to re-read from the on-disk plist so we pick up
+        // writes made by the notification content extension in another process.
+        defaults.synchronize()
         notifyChange()
+    }
+
+    // MARK: - Pending Extension Actions (for Firebase mode)
+
+    private static let pendingActionsKey = "yomo_pending_extension_actions"
+
+    /// Returns and clears any pending actions written by the notification extension.
+    /// For Firebase-mode users, these need to be synced to Firestore.
+    func consumePendingExtensionActions() -> [(type: String, reminderId: String, snoozeDate: Date?)] {
+        defaults.synchronize()
+        guard let raw = defaults.array(forKey: Self.pendingActionsKey) as? [[String: Any]],
+              !raw.isEmpty else {
+            return []
+        }
+        defaults.removeObject(forKey: Self.pendingActionsKey)
+        defaults.synchronize()
+        return raw.compactMap { dict in
+            guard let type = dict["type"] as? String,
+                  let reminderId = dict["reminderId"] as? String else { return nil }
+            let snoozeDate = (dict["snoozeDate"] as? Double).map { Date(timeIntervalSince1970: $0) }
+            return (type: type, reminderId: reminderId, snoozeDate: snoozeDate)
+        }
     }
 
     // MARK: - Data migration

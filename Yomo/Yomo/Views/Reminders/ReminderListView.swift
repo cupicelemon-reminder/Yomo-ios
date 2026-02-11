@@ -53,10 +53,9 @@ struct ReminderListView: View {
             viewModel.stopListening()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-            // Reload in case the notification extension snoozed/completed while in background
-            if viewModel.isLocalMode {
-                LocalReminderStore.shared.reloadFromDisk()
-            }
+            // Sync any snooze/complete actions the notification extension performed
+            // while the app was in the background (handles both local and Firebase modes).
+            viewModel.processPendingExtensionActions()
         }
         .sheet(isPresented: $showNewReminder) {
             NewReminderView()
