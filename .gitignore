@@ -85,3 +85,8 @@ ui-debug.log
 *.swo
 *~
 THE BRIEFS（这个是我选的brief).md
+
+# Contest submission docs (private)
+Yomo_Developer_Bio.md
+Yomo_Proposal.md
+Yomo_Technical_Documentation.md
