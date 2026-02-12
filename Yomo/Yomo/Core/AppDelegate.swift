@@ -52,6 +52,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             Purchases.logLevel = .error
             #endif
             Purchases.configure(withAPIKey: RevenueCatConfig.apiKey)
+            RevenueCatConfig.markConfigured()
         }
 
         // Register for remote notifications (for FCM)

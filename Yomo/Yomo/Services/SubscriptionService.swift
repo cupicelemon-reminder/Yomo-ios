@@ -42,7 +42,17 @@ final class SubscriptionService: ObservableObject {
     // MARK: - Fetch Offerings
 
     func fetchOfferings() async {
-        guard RevenueCatConfig.hasAPIKey else { return }
+        guard RevenueCatConfig.hasAPIKey else {
+            currentOffering = nil
+            errorMessage = "Purchases are unavailable in this build."
+            return
+        }
+
+        guard RevenueCatConfig.isConfigured else {
+            currentOffering = nil
+            errorMessage = "Purchases are unavailable in this build."
+            return
+        }
 
         isLoading = true
         errorMessage = nil
@@ -58,9 +68,14 @@ final class SubscriptionService: ObservableObject {
             #if DEBUG
             print("[SubscriptionService] fetchOfferings error: \(error)")
             #endif
+            currentOffering = nil
             errorMessage = "Failed to load subscription options"
             isLoading = false
         }
+    }
+
+    func retryFetchOfferings() async {
+        await fetchOfferings()
     }
 
     // MARK: - Purchase

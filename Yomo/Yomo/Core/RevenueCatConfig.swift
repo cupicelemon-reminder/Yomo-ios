@@ -11,6 +11,12 @@ enum RevenueCatConfig {
     private static let keyInfoPlistKey = "REVENUECAT_API_KEY"
     private static let modeInfoPlistKey = "REVENUECAT_STORE_MODE"
 
+    private(set) static var isConfigured: Bool = false
+
+    static func markConfigured() {
+        isConfigured = true
+    }
+
     static var apiKey: String {
         if let bundled = Bundle.main.object(forInfoDictionaryKey: keyInfoPlistKey) as? String,
            !bundled.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -29,7 +35,8 @@ enum RevenueCatConfig {
 
     static var looksLikeTestStoreKey: Bool {
         let lower = apiKey.lowercased()
-        return lower.contains("test_store") ||
+        return lower.hasPrefix("test_") ||
+            lower.contains("test_store") ||
             lower.contains("teststore") ||
             lower.contains("sandbox") ||
             lower.hasPrefix("rc_test_")
