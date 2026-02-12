@@ -336,14 +336,6 @@ private struct SignInSheetView: View {
         #endif
     }
 
-    private var isPhoneAuthEnabled: Bool {
-        #if DEBUG
-        return true
-        #else
-        return false
-        #endif
-    }
-
     var body: some View {
         NavigationView {
             ZStack {
@@ -373,15 +365,6 @@ private struct SignInSheetView: View {
                         ) {
                             viewModel.emailAuthMode = .signIn
                             showEmailAuth = true
-                        }
-
-                        if isPhoneAuthEnabled {
-                            AuthButton(
-                                icon: "phone.fill",
-                                title: "Continue with Phone"
-                            ) {
-                                viewModel.showPhoneInput = true
-                            }
                         }
 
                         #if DEBUG
@@ -431,9 +414,6 @@ private struct SignInSheetView: View {
                         .foregroundColor(.brandBlue)
                 }
             }
-        }
-        .sheet(isPresented: $viewModel.showPhoneInput) {
-            PhoneAuthFlowSheet(viewModel: viewModel)
         }
         .sheet(isPresented: $showEmailAuth) {
             EmailAuthSheet(viewModel: viewModel)
