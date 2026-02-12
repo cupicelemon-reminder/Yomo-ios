@@ -115,6 +115,14 @@ class AuthViewModel: ObservableObject {
             return "请输入验证码。"
         case .appNotAuthorized:
             return "当前 App 未被授权使用短信验证（请检查 Bundle ID、Firebase 配置与 APNs 设置）。"
+        case .notificationNotForwarded:
+            return "推送通知配置异常，请确保已启用通知权限后重试。"
+        case .missingClientIdentifier:
+            return "设备验证失败，请确保已启用通知权限后重试。"
+        case .captchaCheckFailed:
+            return "验证检查失败，请重试。"
+        case .webContextCancelled:
+            return "验证流程已取消。"
         default:
             return error.localizedDescription
         }

@@ -50,8 +50,14 @@ final class SubscriptionService: ObservableObject {
         do {
             let offerings = try await Purchases.shared.offerings()
             currentOffering = offerings.current
+            if offerings.current == nil {
+                errorMessage = "No subscription offerings configured. Please check RevenueCat dashboard."
+            }
             isLoading = false
         } catch {
+            #if DEBUG
+            print("[SubscriptionService] fetchOfferings error: \(error)")
+            #endif
             errorMessage = "Failed to load subscription options"
             isLoading = false
         }

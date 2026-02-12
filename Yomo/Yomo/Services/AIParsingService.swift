@@ -245,10 +245,12 @@ final class AIParsingService {
         let daysOfWeek = parsed["days_of_week"] as? [String]
 
         let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let date = dateString.flatMap { dateFormatter.date(from: $0) }
 
         let timeFormatter = DateFormatter()
+        timeFormatter.locale = Locale(identifier: "en_US_POSIX")
         timeFormatter.dateFormat = "HH:mm"
         let time = timeString.flatMap { timeFormatter.date(from: $0) }
 
@@ -287,6 +289,7 @@ final class AIParsingService {
         // Extract time patterns like "3pm", "10:30am", "15:00"
         var extractedTime: Date?
         let timeFormatter = DateFormatter()
+        timeFormatter.locale = Locale(identifier: "en_US_POSIX")
 
         let timePatterns = [
             "\\d{1,2}:\\d{2}\\s*(am|pm)",

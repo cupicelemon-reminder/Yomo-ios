@@ -10,6 +10,8 @@
 	<string>$(REVENUECAT_API_KEY)</string>
 	<key>REVENUECAT_STORE_MODE</key>
 	<string>$(REVENUECAT_STORE_MODE)</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
