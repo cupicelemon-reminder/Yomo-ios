@@ -2,7 +2,7 @@
 //  AuthService.swift
 //  Yomo
 //
-//  Authentication service for Google Sign-In and Phone Auth
+//  Authentication service for Google Sign-In and Email/Password
 //
 
 import Foundation
@@ -28,7 +28,6 @@ final class AuthService: ObservableObject {
         case emailSignInFailed(String)
         case emailSignUpFailed(String)
         case userCreationFailed
-        case phoneAuthFailed
 
         var errorDescription: String? {
             switch self {
@@ -40,8 +39,6 @@ final class AuthService: ObservableObject {
                 return "Email sign up failed: \(message)"
             case .userCreationFailed:
                 return "Failed to create user profile"
-            case .phoneAuthFailed:
-                return "Phone authentication failed"
             }
         }
     }
@@ -150,44 +147,6 @@ final class AuthService: ObservableObject {
             await SubscriptionService.shared.loginUser(userId: authResult.user.uid)
         } catch {
             self.error = .emailSignInFailed(error.localizedDescription)
-            throw error
-        }
-    }
-
-    // MARK: - Phone Authentication
-    func startPhoneAuth(phoneNumber: String) async throws -> String {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            let verificationID = try await PhoneAuthProvider.provider()
-                .verifyPhoneNumber(phoneNumber, uiDelegate: nil)
-            return verificationID
-        } catch {
-            self.error = .phoneAuthFailed
-            throw error
-        }
-    }
-
-    func verifyPhoneCode(verificationID: String, code: String) async throws {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            let credential = PhoneAuthProvider.provider().credential(
-                withVerificationID: verificationID,
-                verificationCode: code
-            )
-
-            let authResult = try await Auth.auth().signIn(with: credential)
-            currentUser = authResult.user
-
-            await loadOrCreateUserProfile(for: authResult.user)
-
-            // Login to RevenueCat
-            await SubscriptionService.shared.loginUser(userId: authResult.user.uid)
-        } catch {
-            self.error = .phoneAuthFailed
             throw error
         }
     }

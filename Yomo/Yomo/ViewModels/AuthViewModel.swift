@@ -27,10 +27,6 @@ class AuthViewModel: ObservableObject {
     @Published var isAuthenticated = false
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var phoneNumber = ""
-    @Published var verificationCode = ""
-    @Published var verificationID: String?
-    @Published var showPhoneInput = false
     @Published var email = ""
     @Published var password = ""
     @Published var confirmPassword = ""
@@ -54,45 +50,6 @@ class AuthViewModel: ObservableObject {
                 isAuthenticated = true
             } catch {
                 errorMessage = error.localizedDescription
-            }
-
-            isLoading = false
-        }
-    }
-
-    func startPhoneAuth() {
-        Task {
-            isLoading = true
-            errorMessage = nil
-
-            do {
-                verificationID = try await authService.startPhoneAuth(phoneNumber: phoneNumber)
-            } catch {
-                errorMessage = Self.friendlyAuthMessage(for: error)
-            }
-
-            isLoading = false
-        }
-    }
-
-    func verifyCode() {
-        guard let verificationID = verificationID else {
-            errorMessage = "No verification ID found"
-            return
-        }
-
-        Task {
-            isLoading = true
-            errorMessage = nil
-
-            do {
-                try await authService.verifyPhoneCode(
-                    verificationID: verificationID,
-                    code: verificationCode
-                )
-                isAuthenticated = true
-            } catch {
-                errorMessage = Self.friendlyAuthMessage(for: error)
             }
 
             isLoading = false
@@ -186,30 +143,10 @@ class AuthViewModel: ObservableObject {
         }
 
         switch code {
-        case .invalidPhoneNumber:
-            return "手机号格式不正确，请检查国家区号和号码。"
         case .tooManyRequests:
-            return "请求过于频繁，请稍后再试。"
-        case .quotaExceeded:
-            return "短信发送已达上限，请稍后再试。"
+            return "Too many requests. Please try again later."
         case .networkError:
-            return "网络错误，请检查网络后重试。"
-        case .invalidVerificationCode:
-            return "验证码错误，请重新输入。"
-        case .sessionExpired:
-            return "验证码已过期，请重新获取。"
-        case .missingVerificationCode:
-            return "请输入验证码。"
-        case .appNotAuthorized:
-            return "当前 App 未被授权使用短信验证（请检查 Bundle ID、Firebase 配置与 APNs 设置）。"
-        case .notificationNotForwarded:
-            return "推送通知配置异常，请确保已启用通知权限后重试。"
-        case .missingClientIdentifier:
-            return "设备验证失败，请确保已启用通知权限后重试。"
-        case .captchaCheckFailed:
-            return "验证检查失败，请重试。"
-        case .webContextCancelled:
-            return "验证流程已取消。"
+            return "Network error. Please check your connection and try again."
         case .invalidEmail:
             return "Please enter a valid email address."
         case .emailAlreadyInUse:
