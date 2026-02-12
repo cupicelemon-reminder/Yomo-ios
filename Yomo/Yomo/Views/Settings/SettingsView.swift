@@ -326,10 +326,19 @@ struct SettingsView: View {
 private struct SignInSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = AuthViewModel()
+    @State private var showEmailAuth = false
 
     private var showInternalTools: Bool {
         #if DEBUG
         return ProcessInfo.processInfo.arguments.contains("-YOMOInternalTools")
+        #else
+        return false
+        #endif
+    }
+
+    private var isPhoneAuthEnabled: Bool {
+        #if DEBUG
+        return true
         #else
         return false
         #endif
@@ -359,10 +368,20 @@ private struct SignInSheetView: View {
                         )
 
                         AuthButton(
-                            icon: "phone.fill",
-                            title: "Continue with Phone"
+                            icon: "envelope.fill",
+                            title: "Continue with Email"
                         ) {
-                            viewModel.showPhoneInput = true
+                            viewModel.emailAuthMode = .signIn
+                            showEmailAuth = true
+                        }
+
+                        if isPhoneAuthEnabled {
+                            AuthButton(
+                                icon: "phone.fill",
+                                title: "Continue with Phone"
+                            ) {
+                                viewModel.showPhoneInput = true
+                            }
                         }
 
                         #if DEBUG
@@ -415,6 +434,9 @@ private struct SignInSheetView: View {
         }
         .sheet(isPresented: $viewModel.showPhoneInput) {
             PhoneAuthFlowSheet(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showEmailAuth) {
+            EmailAuthSheet(viewModel: viewModel)
         }
         .onChange(of: viewModel.isAuthenticated) { isAuthed in
             if isAuthed {

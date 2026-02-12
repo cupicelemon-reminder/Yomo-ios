@@ -25,6 +25,8 @@ final class AuthService: ObservableObject {
 
     enum AuthError: LocalizedError {
         case signInFailed(String)
+        case emailSignInFailed(String)
+        case emailSignUpFailed(String)
         case userCreationFailed
         case phoneAuthFailed
 
@@ -32,6 +34,10 @@ final class AuthService: ObservableObject {
             switch self {
             case .signInFailed(let message):
                 return "Sign in failed: \(message)"
+            case .emailSignInFailed(let message):
+                return "Email sign in failed: \(message)"
+            case .emailSignUpFailed(let message):
+                return "Email sign up failed: \(message)"
             case .userCreationFailed:
                 return "Failed to create user profile"
             case .phoneAuthFailed:
@@ -98,6 +104,52 @@ final class AuthService: ObservableObject {
 
         } catch {
             self.error = .signInFailed(error.localizedDescription)
+            throw error
+        }
+    }
+
+    // MARK: - Email Authentication
+    func signUpWithEmail(email: String, password: String, displayName: String?) async throws {
+        isLoading = true
+        defer { isLoading = false }
+
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let normalizedDisplayName = displayName?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        do {
+            let authResult = try await Auth.auth().createUser(withEmail: normalizedEmail, password: password)
+
+            if let normalizedDisplayName, !normalizedDisplayName.isEmpty {
+                let profileChangeRequest = authResult.user.createProfileChangeRequest()
+                profileChangeRequest.displayName = normalizedDisplayName
+                try await profileChangeRequest.commitChanges()
+            }
+
+            let user = Auth.auth().currentUser ?? authResult.user
+            currentUser = user
+
+            await loadOrCreateUserProfile(for: user)
+            await SubscriptionService.shared.loginUser(userId: user.uid)
+        } catch {
+            self.error = .emailSignUpFailed(error.localizedDescription)
+            throw error
+        }
+    }
+
+    func signInWithEmail(email: String, password: String) async throws {
+        isLoading = true
+        defer { isLoading = false }
+
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        do {
+            let authResult = try await Auth.auth().signIn(withEmail: normalizedEmail, password: password)
+            currentUser = authResult.user
+
+            await loadOrCreateUserProfile(for: authResult.user)
+            await SubscriptionService.shared.loginUser(userId: authResult.user.uid)
+        } catch {
+            self.error = .emailSignInFailed(error.localizedDescription)
             throw error
         }
     }

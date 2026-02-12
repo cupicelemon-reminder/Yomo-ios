@@ -29,9 +29,18 @@ enum Constants {
     #endif
 
     // MARK: - AI Services
-    static let openRouterAPIKey = "" // TODO: Add OpenRouter API key
-    static let claudeAPIKey = "" // TODO: Add Anthropic API key
-    static let openaiAPIKey = "" // TODO: Add OpenAI API key
+    // Local-only runtime keys:
+    // set OPENROUTER_API_KEY / CLAUDE_API_KEY / OPENAI_API_KEY
+    // via Xcode user-defined build settings (do not commit).
+    static var openRouterAPIKey: String {
+        resolvedSecret(forInfoPlistKey: "OPENROUTER_API_KEY")
+    }
+    static var claudeAPIKey: String {
+        resolvedSecret(forInfoPlistKey: "CLAUDE_API_KEY")
+    }
+    static var openaiAPIKey: String {
+        resolvedSecret(forInfoPlistKey: "OPENAI_API_KEY")
+    }
 
     // MARK: - Notification Limits
     static let maxPendingNotifications = 64
@@ -41,5 +50,17 @@ enum Constants {
         static let customRecurrence = true
         static let customSnooze = false // Free feature
         static let aiParsing = false // Free feature with limits
+    }
+
+    private static func resolvedSecret(forInfoPlistKey key: String) -> String {
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: key) as? String else {
+            return ""
+        }
+
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty || trimmed.hasPrefix("$(") {
+            return ""
+        }
+        return trimmed
     }
 }

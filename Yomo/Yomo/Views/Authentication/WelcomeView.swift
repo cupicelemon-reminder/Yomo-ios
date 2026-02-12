@@ -11,10 +11,19 @@ struct WelcomeView: View {
     @StateObject private var viewModel = AuthViewModel()
     @State private var animateContent = false
     @State private var logoFloat = false
+    @State private var showEmailAuth = false
 
     private var showInternalTools: Bool {
         #if DEBUG
         return ProcessInfo.processInfo.arguments.contains("-YOMOInternalTools")
+        #else
+        return false
+        #endif
+    }
+
+    private var isPhoneAuthEnabled: Bool {
+        #if DEBUG
+        return true
         #else
         return false
         #endif
@@ -66,10 +75,20 @@ struct WelcomeView: View {
                     )
 
                     AuthButton(
-                        icon: "phone.fill",
-                        title: "Continue with Phone"
+                        icon: "envelope.fill",
+                        title: "Continue with Email"
                     ) {
-                        viewModel.showPhoneInput = true
+                        viewModel.emailAuthMode = .signIn
+                        showEmailAuth = true
+                    }
+
+                    if isPhoneAuthEnabled {
+                        AuthButton(
+                            icon: "phone.fill",
+                            title: "Continue with Phone"
+                        ) {
+                            viewModel.showPhoneInput = true
+                        }
                     }
 
                     #if DEBUG
@@ -126,6 +145,9 @@ struct WelcomeView: View {
         }
         .sheet(isPresented: $viewModel.showPhoneInput) {
             PhoneAuthFlowSheet(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showEmailAuth) {
+            EmailAuthSheet(viewModel: viewModel)
         }
         .onAppear {
             withAnimation(.easeOut(duration: 0.8)) {
