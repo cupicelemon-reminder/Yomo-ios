@@ -23,11 +23,15 @@ class ReminderViewModel: ObservableObject {
     @Published var thisWeekReminders: [Reminder] = []
     @Published var laterReminders: [Reminder] = []
 
+    // Tracks when each overdue recurring reminder was first detected
+    @Published var overdueRecurringFirstSeen: [String: Date] = [:]
+
     private let service = ReminderService()
     private let localStore = LocalReminderStore.shared
     private var listener: ListenerRegistration?
     private var hasStarted = false
     private var lastActiveReminderIds: Set<String> = []
+    private var autoAdvanceTimer: AnyCancellable?
 
     var isEmpty: Bool {
         reminders.isEmpty
@@ -42,6 +46,15 @@ class ReminderViewModel: ObservableObject {
         guard !hasStarted else { return }
         hasStarted = true
         isLoading = true
+
+        // Start periodic auto-advance timer
+        autoAdvanceTimer = Timer.publish(every: 30, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.checkAutoAdvance()
+                }
+            }
 
         if isLocalMode {
             localStore.migrateIfNeeded()
@@ -76,6 +89,8 @@ class ReminderViewModel: ObservableObject {
         listener = nil
         localStore.removeAllListeners()
         lastActiveReminderIds = []
+        autoAdvanceTimer?.cancel()
+        autoAdvanceTimer = nil
     }
 
     func completeReminder(_ reminder: Reminder) {
@@ -124,7 +139,6 @@ class ReminderViewModel: ObservableObject {
         let calendar = Calendar.current
         let now = Date()
 
-        // Sort by displayDate ascending (closest to now first)
         let sorted = reminders.sorted { $0.displayDate < $1.displayDate }
 
         overdueReminders = sorted.filter { $0.isOverdue }
@@ -157,6 +171,91 @@ class ReminderViewModel: ObservableObject {
                 return false
             }
             return reminder.displayDate >= weekEnd
+        }
+
+        // Track overdue recurring reminders for "Past Due" countdown
+        updateOverdueRecurringTracking()
+    }
+
+    private func updateOverdueRecurringTracking() {
+        let now = Date()
+
+        // Find all overdue recurring reminder IDs
+        let overdueRecurringIds = Set(overdueReminders.compactMap { reminder -> String? in
+            guard let id = reminder.id,
+                  let recurrence = reminder.recurrence,
+                  recurrence.type != .none else {
+                return nil
+            }
+            return id
+        })
+
+        // Add newly detected overdue recurring reminders
+        for id in overdueRecurringIds where overdueRecurringFirstSeen[id] == nil {
+            overdueRecurringFirstSeen[id] = now
+        }
+
+        // Clean up entries for reminders that are no longer overdue or no longer exist
+        let allReminderIds = Set(reminders.compactMap { $0.id })
+        for id in overdueRecurringFirstSeen.keys {
+            if !overdueRecurringIds.contains(id) || !allReminderIds.contains(id) {
+                overdueRecurringFirstSeen.removeValue(forKey: id)
+            }
+        }
+    }
+
+    private func checkAutoAdvance() {
+        let now = Date()
+
+        for (reminderId, firstSeen) in overdueRecurringFirstSeen {
+            guard now.timeIntervalSince(firstSeen) >= 600 else { continue }
+
+            guard let reminder = reminders.first(where: { $0.id == reminderId }),
+                  let recurrence = reminder.recurrence,
+                  recurrence.type != .none else {
+                overdueRecurringFirstSeen.removeValue(forKey: reminderId)
+                continue
+            }
+
+            // Auto-advance to next occurrence
+            autoAdvanceReminder(reminder, recurrence: recurrence)
+            overdueRecurringFirstSeen.removeValue(forKey: reminderId)
+        }
+    }
+
+    private func autoAdvanceReminder(_ reminder: Reminder, recurrence: RecurrenceRule) {
+        let unit: String = {
+            switch recurrence.unit ?? .day {
+            case .hour: return "hour"
+            case .day: return "day"
+            case .week: return "week"
+            case .month: return "month"
+            }
+        }()
+
+        let nextDate = AppDelegate.calculateNextDate(
+            from: reminder.triggerDate.dateValue(),
+            interval: recurrence.interval,
+            unit: unit
+        )
+
+        if isLocalMode {
+            localStore.advanceReminderToDate(reminderId: reminder.id ?? "", nextDate: nextDate)
+        } else {
+            guard let reminderId = reminder.id,
+                  let userId = Auth.auth().currentUser?.uid else { return }
+
+            let db = Firestore.firestore()
+            let ref = db.collection("users").document(userId)
+                .collection("reminders").document(reminderId)
+
+            Task {
+                try? await ref.updateData([
+                    "triggerDate": Timestamp(date: nextDate),
+                    "snoozedUntil": FieldValue.delete(),
+                    "updatedAt": Timestamp(date: Date())
+                ])
+            }
         }
     }
 

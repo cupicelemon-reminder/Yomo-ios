@@ -13,10 +13,11 @@ struct PaywallView: View {
     @StateObject private var subscriptionService = SubscriptionService.shared
     @State private var selectedPlan: PlanType = .annual
     @State private var isRestoring = false
+    @State private var appeared = false
 
     private let monthlyFallbackPrice = "US$4.99"
     private let annualFallbackPrice = "US$39.99"
-    private let annualBadgeText = "SAVE 33%"
+    private let annualBadgeText = "Best Value"
 
     enum PlanType {
         case monthly
@@ -26,29 +27,18 @@ struct PaywallView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: Spacing.lg) {
-                    // Header
+                VStack(spacing: Spacing.md) {
                     headerSection
-
-                    // Feature list
                     featureList
-
-                    // Plan cards
                     planCards
-
-                    // CTA Button
-                    ctaButton
-
-                    // Fine print
+                    ctaSection
                     finePrint
-
-                    // Restore
                     restoreButton
                 }
                 .padding(.horizontal, Spacing.lg)
                 .padding(.bottom, Spacing.xl)
             }
-            .background(Color.background)
+            .background(GradientBackground())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -66,59 +56,98 @@ struct PaywallView: View {
         .task {
             await subscriptionService.fetchOfferings()
         }
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.6).delay(0.1)) {
+                appeared = true
+            }
+        }
     }
 
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(spacing: Spacing.md) {
-            Image("logo-nobg")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 64, height: 64)
+        VStack(spacing: Spacing.sm) {
+            ZStack {
+                // Gold glow halo
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.checkGold.opacity(0.25),
+                                Color.checkGold.opacity(0.08),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 20,
+                            endRadius: 80
+                        )
+                    )
+                    .frame(width: 160, height: 160)
+
+                Image("logo-nobg")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 96, height: 96)
+            }
 
             Text("Unlock Yomo Pro")
-                .font(.titleLarge)
+                .font(.system(size: 32, weight: .bold))
                 .foregroundColor(.textPrimary)
 
-            Text("Power features for power users")
+            Text("Your reminders, supercharged")
                 .font(.bodyRegular)
                 .foregroundColor(.textSecondary)
         }
-        .padding(.top, Spacing.lg)
+        .padding(.top, Spacing.md)
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 10)
     }
 
     // MARK: - Feature List
 
     private var featureList: some View {
-        VStack(spacing: Spacing.md) {
-            FeatureRow(
+        VStack(spacing: 0) {
+            PaywallFeatureRow(
                 icon: "clock.arrow.circlepath",
                 title: "Custom Snooze",
-                description: "Snooze for any minutes from notification"
+                description: "Snooze for any duration right from notifications",
+                delay: 0.05
             )
-            FeatureRow(
+
+            Divider().padding(.leading, 52)
+
+            PaywallFeatureRow(
                 icon: "arrow.triangle.2.circlepath",
                 title: "Advanced Recurrence",
-                description: "Custom intervals, hourly, monthly rules"
+                description: "Custom intervals, hourly, monthly rules",
+                delay: 0.1
             )
-            FeatureRow(
+
+            Divider().padding(.leading, 52)
+
+            PaywallFeatureRow(
                 icon: "arrow.triangle.swap",
                 title: "Cross-Device Sync",
-                description: "Dismiss once, gone everywhere"
+                description: "Dismiss once, gone everywhere",
+                delay: 0.15
             )
-            FeatureRow(
+
+            Divider().padding(.leading, 52)
+
+            PaywallFeatureRow(
                 icon: "paintpalette",
                 title: "Themes",
-                description: "Dark, Light, and Glass themes"
+                description: "Dark, Light, and Glass themes",
+                delay: 0.2
             )
         }
-        .padding(Spacing.md)
+        .padding(.vertical, Spacing.sm)
+        .padding(.horizontal, Spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: CornerRadius.md)
+            RoundedRectangle(cornerRadius: CornerRadius.lg)
                 .fill(Color.cardGlass)
                 .overlay(
-                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                    RoundedRectangle(cornerRadius: CornerRadius.lg)
                         .stroke(Color.cardBorder, lineWidth: 1)
                 )
         )
@@ -129,40 +158,54 @@ struct PaywallView: View {
 
     private var planCards: some View {
         HStack(spacing: Spacing.md) {
-            // Monthly
-            PlanCard(
+            PaywallPlanCard(
                 title: "Monthly",
                 price: monthlyPrice,
                 period: "/month",
                 isSelected: selectedPlan == .monthly,
                 badge: nil
             ) {
-                selectedPlan = .monthly
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    selectedPlan = .monthly
+                }
             }
 
-            // Annual
-            PlanCard(
+            PaywallPlanCard(
                 title: "Annual",
                 price: annualPrice,
                 period: "/year",
                 isSelected: selectedPlan == .annual,
                 badge: annualBadgeText
             ) {
-                selectedPlan = .annual
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    selectedPlan = .annual
+                }
             }
         }
+        .padding(.top, Spacing.sm)
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 8)
+        .animation(.easeOut(duration: 0.5).delay(0.25), value: appeared)
     }
 
     // MARK: - CTA
 
-    private var ctaButton: some View {
-        PrimaryButton(
-            "Start 3-Day Free Trial",
-            icon: "sparkles",
-            isLoading: subscriptionService.isLoading
-        ) {
-            purchaseSelectedPlan()
+    private var ctaSection: some View {
+        VStack(spacing: Spacing.xs) {
+            PrimaryButton(
+                "Start 3-Day Free Trial",
+                icon: "sparkles",
+                isLoading: subscriptionService.isLoading,
+                isDisabled: isPurchaseDisabled
+            ) {
+                purchaseSelectedPlan()
+            }
+
+            Text("Then \(selectedPlanPrice)\(selectedPlanPeriod)")
+                .font(.caption)
+                .foregroundColor(.textTertiary)
         }
+        .padding(.top, Spacing.sm)
     }
 
     // MARK: - Fine Print
@@ -180,6 +223,17 @@ struct PaywallView: View {
                     .foregroundColor(.dangerRed)
                     .multilineTextAlignment(.center)
             }
+
+            if subscriptionService.currentOffering == nil,
+               !subscriptionService.isLoading {
+                Button {
+                    retryOfferings()
+                } label: {
+                    Text("Retry loading options")
+                        .font(.caption)
+                        .foregroundColor(.brandBlue)
+                }
+            }
         }
     }
 
@@ -190,10 +244,11 @@ struct PaywallView: View {
             restorePurchases()
         } label: {
             Text("Restore Purchases")
-                .font(.bodySmall)
-                .foregroundColor(.brandBlue)
+                .font(.caption)
+                .foregroundColor(.textTertiary)
         }
         .disabled(isRestoring)
+        .padding(.top, Spacing.sm)
     }
 
     // MARK: - Prices
@@ -214,20 +269,33 @@ struct PaywallView: View {
         return annualFallbackPrice
     }
 
+    private var selectedPlanPrice: String {
+        selectedPlan == .annual ? annualPrice : monthlyPrice
+    }
+
+    private var selectedPlanPeriod: String {
+        selectedPlan == .annual ? "/year" : "/month"
+    }
+
+    private var selectedPackage: Package? {
+        guard let offering = subscriptionService.currentOffering else { return nil }
+
+        switch selectedPlan {
+        case .monthly:
+            return offering.monthly
+        case .annual:
+            return offering.annual
+        }
+    }
+
+    private var isPurchaseDisabled: Bool {
+        selectedPackage == nil
+    }
+
     // MARK: - Actions
 
     private func purchaseSelectedPlan() {
-        guard let offering = subscriptionService.currentOffering else { return }
-
-        let package: Package?
-        switch selectedPlan {
-        case .monthly:
-            package = offering.monthly
-        case .annual:
-            package = offering.annual
-        }
-
-        guard let pkg = package else { return }
+        guard let pkg = selectedPackage else { return }
 
         Task {
             let success = await subscriptionService.purchase(package: pkg)
@@ -249,21 +317,34 @@ struct PaywallView: View {
             }
         }
     }
+
+    private func retryOfferings() {
+        Task {
+            await subscriptionService.retryFetchOfferings()
+        }
+    }
 }
 
 // MARK: - Feature Row
 
-private struct FeatureRow: View {
+private struct PaywallFeatureRow: View {
     let icon: String
     let title: String
     let description: String
+    let delay: Double
+    @State private var visible = false
 
     var body: some View {
         HStack(spacing: Spacing.md) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundColor(.brandBlue)
-                .frame(width: 32, height: 32)
+            ZStack {
+                Circle()
+                    .fill(Color.brandBlueBg)
+                    .frame(width: 36, height: 36)
+
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.brandBlue)
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -276,17 +357,21 @@ private struct FeatureRow: View {
             }
 
             Spacer()
-
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.checkGold)
-                .font(.system(size: 18))
+        }
+        .padding(.vertical, Spacing.sm)
+        .opacity(visible ? 1 : 0)
+        .offset(x: visible ? 0 : -8)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.4).delay(delay)) {
+                visible = true
+            }
         }
     }
 }
 
 // MARK: - Plan Card
 
-private struct PlanCard: View {
+private struct PaywallPlanCard: View {
     let title: String
     let price: String
     let period: String
@@ -299,20 +384,26 @@ private struct PlanCard: View {
             VStack(spacing: Spacing.sm) {
                 if let badge {
                     Text(badge)
-                        .font(.caption)
+                        .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.horizontal, Spacing.sm)
-                        .padding(.vertical, 2)
+                        .padding(.vertical, 3)
                         .background(
                             Capsule()
-                                .fill(Color.checkGold)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.checkGold, Color(hex: "#E8941E")],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
                         )
                 } else {
-                    Spacer().frame(height: 18)
+                    Spacer().frame(height: 20)
                 }
 
                 Text(title)
-                    .font(.bodyRegular)
+                    .font(.bodySmall)
                     .foregroundColor(isSelected ? .brandBlue : .textSecondary)
 
                 Text(price)
@@ -336,6 +427,12 @@ private struct PlanCard: View {
                             )
                     )
             )
+            .shadow(
+                color: isSelected ? Color.brandBlue.opacity(0.15) : .clear,
+                radius: 8, x: 0, y: 2
+            )
+            .scaleEffect(isSelected ? 1.02 : 1.0)
         }
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
     }
 }

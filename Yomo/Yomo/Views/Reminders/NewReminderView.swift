@@ -225,7 +225,7 @@ struct NewReminderView: View {
             "Parse"
         }
 
-        let icon: String = speechTranscriber.isRecording ? "waveform" : "sparkles"
+        let icon: String = speechTranscriber.isRecording ? "waveform" : "mic.fill"
         let fill: Color = speechTranscriber.isRecording ? .dangerRed : .brandBlue
 
         return HStack(spacing: Spacing.xs) {

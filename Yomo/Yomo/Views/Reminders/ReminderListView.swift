@@ -12,6 +12,8 @@ struct ReminderListView: View {
     @State private var showNewReminder = false
     @State private var selectedReminder: Reminder?
     @State private var showSettings = false
+    @AppStorage("hasCompletedFeatureTour") private var hasCompletedFeatureTour = false
+    @State private var showFeatureTour = false
 
     var body: some View {
         ZStack {
@@ -66,6 +68,15 @@ struct ReminderListView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView()
                 .environmentObject(AppState.shared)
+        }
+        .fullScreenCover(isPresented: $showFeatureTour) {
+            FeatureTourView()
+                .environmentObject(AppState.shared)
+        }
+        .onAppear {
+            if !hasCompletedFeatureTour {
+                showFeatureTour = true
+            }
         }
     }
 
@@ -164,6 +175,7 @@ struct ReminderListView: View {
                 ReminderCard(reminder: reminder) {
                     selectedReminder = reminder
                 }
+                .environmentObject(viewModel)
                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                     Button {
                         HapticManager.success()
@@ -186,9 +198,9 @@ struct ReminderListView: View {
                 .listRowInsets(
                     EdgeInsets(
                         top: 6,
-                        leading: Spacing.lg,
+                        leading: Spacing.md,
                         bottom: 6,
-                        trailing: Spacing.lg
+                        trailing: Spacing.md
                     )
                 )
             }
@@ -212,13 +224,24 @@ struct ReminderListView: View {
         } label: {
             ZStack {
                 Circle()
-                    .fill(Color.brandBlue)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(hex: "#5A9DE0"), Color.brandBlue],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(width: 56, height: 56)
+
+                Circle()
+                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
                     .frame(width: 56, height: 56)
 
                 Image(systemName: "plus")
                     .font(.system(size: 24, weight: .semibold))
                     .foregroundColor(.white)
             }
+            .shadow(color: Color.brandBlue.opacity(0.35), radius: 6, x: 0, y: 3)
             .elevatedShadow()
         }
     }

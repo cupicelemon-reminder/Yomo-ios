@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ReminderCard: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var viewModel: ReminderViewModel
     let reminder: Reminder
     var onTap: (() -> Void)? = nil
 
@@ -25,6 +26,15 @@ struct ReminderCard: View {
         }
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: reminder.displayDate)
+    }
+
+    private var isOverdueRecurring: Bool {
+        guard reminder.isOverdue,
+              let recurrence = reminder.recurrence,
+              recurrence.type != .none else {
+            return false
+        }
+        return true
     }
 
     private var recurrenceText: String? {
@@ -94,7 +104,9 @@ struct ReminderCard: View {
                         .foregroundColor(.textPrimary)
                         .lineLimit(2)
 
-                    if let recurrenceText = recurrenceText {
+                    if isOverdueRecurring {
+                        pastDueLabel
+                    } else if let recurrenceText = recurrenceText {
                         Text(recurrenceText)
                             .font(.bodySmall)
                             .foregroundColor(.brandBlue)
@@ -111,5 +123,39 @@ struct ReminderCard: View {
             .liquidGlassBackground(isGlass: appState.theme.usesGlassMaterial)
         }
         .buttonStyle(.plain)
+    }
+
+    private var pastDueLabel: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let remaining = pastDueCountdownText(now: context.date)
+            HStack(spacing: Spacing.xs) {
+                Text("Past Due")
+                    .font(.bodySmall)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.dangerRed)
+
+                if let remaining {
+                    Text("· \(remaining)")
+                        .font(.bodySmall)
+                        .foregroundColor(.dangerRed.opacity(0.7))
+                }
+            }
+        }
+    }
+
+    private func pastDueCountdownText(now: Date) -> String? {
+        guard let reminderId = reminder.id,
+              let firstSeen = viewModel.overdueRecurringFirstSeen[reminderId] else {
+            return nil
+        }
+
+        let autoAdvanceAt = firstSeen.addingTimeInterval(600) // 10 minutes
+        let remaining = autoAdvanceAt.timeIntervalSince(now)
+
+        guard remaining > 0 else { return nil }
+
+        let minutes = Int(remaining) / 60
+        let seconds = Int(remaining) % 60
+        return "\(minutes)m \(seconds)s"
     }
 }

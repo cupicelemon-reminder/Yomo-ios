@@ -180,6 +180,27 @@ final class LocalReminderStore {
         loadReminders().first { $0.id == id }
     }
 
+    /// Advance a recurring reminder's triggerDate to the given next date (auto-advance)
+    func advanceReminderToDate(reminderId: String, nextDate: Date) {
+        var reminders = loadReminders()
+        if let index = reminders.firstIndex(where: { $0.id == reminderId }) {
+            let r = reminders[index]
+            reminders[index] = Reminder(
+                id: r.id,
+                title: r.title,
+                notes: r.notes,
+                triggerDate: Timestamp(date: nextDate),
+                recurrence: r.recurrence,
+                status: .active,
+                snoozedUntil: nil,
+                createdAt: r.createdAt,
+                updatedAt: Timestamp(date: Date())
+            )
+            saveReminders(reminders)
+            notifyChange()
+        }
+    }
+
     /// Update the snoozedUntil field for a local reminder
     func snoozeReminder(id: String, until date: Date) {
         var reminders = loadReminders()

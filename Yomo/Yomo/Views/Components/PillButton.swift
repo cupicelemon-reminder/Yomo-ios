@@ -40,7 +40,19 @@ struct PillButton: View {
             .frame(height: 36)
             .background(
                 Capsule()
-                    .fill(isActive ? Color.brandBlue : Color.brandBlueBg)
+                    .fill(
+                        isActive
+                            ? AnyShapeStyle(LinearGradient(
+                                colors: [Color(hex: "#5A9DE0"), Color.brandBlue],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ))
+                            : AnyShapeStyle(Color.brandBlueBg)
+                    )
+            )
+            .shadow(
+                color: isActive ? Color.brandBlue.opacity(0.2) : .clear,
+                radius: 3, x: 0, y: 1
             )
         }
     }
