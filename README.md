@@ -104,11 +104,11 @@ Yomo/Yomo/
    - Update Bundle ID in Firebase to match `com.yomo.Yomo`
 
 3. **Add API Keys**
-   - Create your local constants file (gitignored):
-     - Copy `Yomo/Yomo/Core/Constants.swift.example` → `Yomo/Yomo/Core/Constants.swift`
-   - Add your API keys (keep them out of git):
-     - RevenueCat API key
-     - Claude/OpenAI API key (for AI parsing)
+   - RevenueCat keys are configured via target build settings.
+   - AI keys are injected locally through Xcode build settings (do not commit):
+     - `OPENROUTER_API_KEY`
+     - `CLAUDE_API_KEY`
+     - `OPENAI_API_KEY`
 
 4. **Open in Xcode**
    ```bash
@@ -143,20 +143,12 @@ Yomo/Yomo/
 
 ### API Keys Required
 
-Create and edit `Yomo/Yomo/Core/Constants.swift` (do not commit real keys to a public repo):
+Set local-only AI key build settings on target `Yomo` (do not commit real keys):
 
 ```swift
-enum Constants {
-    static let bundleId = "com.binye.Yomo"
-    static let appGroupId = "group.com.binye.Yomo"
-    static let notificationCategoryId = "YOMO_REMINDER"
-
-    // Fallback only. Build settings override this automatically.
-    static let revenueCatAPIKey = "YOUR_REVENUECAT_KEY"
-    static let openRouterAPIKey = "YOUR_OPENROUTER_KEY"
-    static let claudeAPIKey = "YOUR_ANTHROPIC_KEY"
-    static let openaiAPIKey = "YOUR_OPENAI_KEY"
-}
+OPENROUTER_API_KEY = your_local_key
+CLAUDE_API_KEY = your_local_key
+OPENAI_API_KEY = your_local_key
 ```
 
 ### RevenueCat Dual-Track Setup (Implemented)

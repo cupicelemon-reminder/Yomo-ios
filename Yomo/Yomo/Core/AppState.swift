@@ -10,8 +10,9 @@ import Combine
 
 enum AppScreen {
     case welcome
+    case loading
     case onboarding
-    case celebration
+    case paywall
     case main
 }
 
@@ -36,13 +37,13 @@ class AppState: ObservableObject {
     static let shared = AppState()
 
     private init() {
-        hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
         isPro = UserDefaults.standard.bool(forKey: "isPro")
         theme = ThemePreferences.load()
 
-        // Restore auth state
+        // Restore auth state — onboarding status is determined when
+        // the profile loads from Firestore via updateUser().
         if let _ = FirebaseAuthStateHelper.currentUser {
-            currentScreen = hasCompletedOnboarding ? .main : .onboarding
+            currentScreen = .loading
         } else {
             currentScreen = .welcome
         }
@@ -76,7 +77,8 @@ class AppState: ObservableObject {
             userDefaults.set(userId, forKey: "userId")
         }
 
-        if user != nil {
+        if let user = user {
+            hasCompletedOnboarding = user.hasCompletedOnboarding
             if hasCompletedOnboarding {
                 currentScreen = .main
             } else {
@@ -89,18 +91,30 @@ class AppState: ObservableObject {
 
     func completeOnboarding() {
         hasCompletedOnboarding = true
-        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
-        currentScreen = .celebration
-    }
+        if var profile = currentUser {
+            profile.hasCompletedOnboarding = true
+            currentUser = profile
+        }
+        currentScreen = .paywall
 
-    func finishCelebration() {
-        currentScreen = .main
+        Task {
+            await AuthService.shared.completeOnboardingInFirestore()
+        }
     }
 
     func skipOnboarding() {
-        hasCompletedOnboarding = true
-        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+        completeOnboarding()
+    }
+
+    func finishPaywall() {
         currentScreen = .main
+    }
+
+    func resetOnboardingState() {
+        hasCompletedOnboarding = false
+        // Clean up legacy UserDefaults keys
+        UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
+        UserDefaults.standard.removeObject(forKey: "hasCompletedFeatureTour")
     }
 
     func clearPendingSnooze() {

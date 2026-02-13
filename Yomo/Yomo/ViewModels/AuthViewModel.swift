@@ -175,7 +175,8 @@ class AuthViewModel: ObservableObject {
             email: "dev@yomo.test",
             phone: nil,
             photoURL: nil,
-            createdAt: FirebaseFirestore.Timestamp(date: Date())
+            createdAt: FirebaseFirestore.Timestamp(date: Date()),
+            hasCompletedOnboarding: false
         )
         AppState.shared.updateUser(profile)
         isAuthenticated = true

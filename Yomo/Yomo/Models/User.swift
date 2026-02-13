@@ -15,6 +15,7 @@ struct UserProfile: Codable, Identifiable {
     let phone: String?
     let photoURL: String?
     let createdAt: Timestamp
+    var hasCompletedOnboarding: Bool
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -23,6 +24,7 @@ struct UserProfile: Codable, Identifiable {
         case phone
         case photoURL
         case createdAt
+        case hasCompletedOnboarding
     }
 }
 

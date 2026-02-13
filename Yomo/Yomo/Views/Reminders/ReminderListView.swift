@@ -12,9 +12,6 @@ struct ReminderListView: View {
     @State private var showNewReminder = false
     @State private var selectedReminder: Reminder?
     @State private var showSettings = false
-    @AppStorage("hasCompletedFeatureTour") private var hasCompletedFeatureTour = false
-    @State private var showFeatureTour = false
-
     var body: some View {
         ZStack {
             Color.background
@@ -68,15 +65,6 @@ struct ReminderListView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView()
                 .environmentObject(AppState.shared)
-        }
-        .fullScreenCover(isPresented: $showFeatureTour) {
-            FeatureTourView()
-                .environmentObject(AppState.shared)
-        }
-        .onAppear {
-            if !hasCompletedFeatureTour {
-                showFeatureTour = true
-            }
         }
     }
 

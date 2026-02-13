@@ -11,6 +11,8 @@ struct FeatureTourView: View {
     @Environment(\.dismiss) var dismiss
     @State private var currentPage = 0
 
+    var onComplete: (() -> Void)?
+
     private let steps: [TourStep] = [
         TourStep(
             icon: "mic.fill",
@@ -135,8 +137,12 @@ struct FeatureTourView: View {
     }
 
     private func completeTour() {
-        UserDefaults.standard.set(true, forKey: "hasCompletedFeatureTour")
-        dismiss()
+        if let onComplete = onComplete {
+            onComplete()
+        } else {
+            UserDefaults.standard.set(true, forKey: "hasCompletedFeatureTour")
+            dismiss()
+        }
     }
 }
 

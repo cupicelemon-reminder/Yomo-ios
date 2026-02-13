@@ -44,21 +44,25 @@ struct ContentView: View {
                     WelcomeView()
                         .transition(.opacity)
 
+                case .loading:
+                    ZStack {
+                        GradientBackground()
+                        ProgressView()
+                            .tint(.brandBlue)
+                    }
+                    .transition(.opacity)
+
                 case .onboarding:
-                    OnboardingView(
-                        onComplete: {
-                            appState.completeOnboarding()
-                        },
-                        onSkip: {
-                            appState.skipOnboarding()
-                        }
-                    )
+                    FeatureTourView(onComplete: {
+                        appState.completeOnboarding()
+                    })
                     .transition(.move(edge: .trailing))
 
-                case .celebration:
-                    CelebrationView {
-                        appState.finishCelebration()
-                    }
+                case .paywall:
+                    PaywallView(
+                        isOnboarding: true,
+                        onDismissAction: { appState.finishPaywall() }
+                    )
                     .transition(.opacity)
 
                 case .main:

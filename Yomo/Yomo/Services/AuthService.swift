@@ -162,7 +162,8 @@ final class AuthService: ObservableObject {
             email: user.email ?? "",
             phone: user.phoneNumber,
             photoURL: user.photoURL?.absoluteString,
-            createdAt: Timestamp(date: Date())
+            createdAt: Timestamp(date: Date()),
+            hasCompletedOnboarding: false
         )
 
         do {
@@ -174,7 +175,8 @@ final class AuthService: ObservableObject {
                     "email": user.email ?? "",
                     "phone": user.phoneNumber ?? "",
                     "photoURL": user.photoURL?.absoluteString ?? "",
-                    "createdAt": Timestamp(date: Date())
+                    "createdAt": Timestamp(date: Date()),
+                    "hasCompletedOnboarding": false
                 ]
 
                 try await userRef.setData(profileData)
@@ -184,6 +186,9 @@ final class AuthService: ObservableObject {
                     "plan": NSNull(),
                     "expiresAt": NSNull()
                 ])
+
+                // Seed tutorial reminders for new users
+                await seedTutorialReminders(userId: user.uid)
             } else {
                 // Backfill missing profile fields when a user signs in with a new provider.
                 var updates: [String: Any] = [:]
@@ -199,6 +204,15 @@ final class AuthService: ObservableObject {
                     updates["phone"] = phone
                 }
 
+                // Migrate legacy onboarding flag from UserDefaults to Firestore
+                if data["hasCompletedOnboarding"] == nil {
+                    let legacyCompleted = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+                        || UserDefaults.standard.bool(forKey: "hasCompletedFeatureTour")
+                    if legacyCompleted {
+                        updates["hasCompletedOnboarding"] = true
+                    }
+                }
+
                 if !updates.isEmpty {
                     try await userRef.setData(updates, merge: true)
                 }
@@ -212,7 +226,8 @@ final class AuthService: ObservableObject {
                     email: data["email"] as? String ?? "",
                     phone: data["phone"] as? String,
                     photoURL: data["photoURL"] as? String,
-                    createdAt: data["createdAt"] as? Timestamp ?? Timestamp(date: Date())
+                    createdAt: data["createdAt"] as? Timestamp ?? Timestamp(date: Date()),
+                    hasCompletedOnboarding: data["hasCompletedOnboarding"] as? Bool ?? false
                 )
                 AppState.shared.updateUser(profile)
             } else {
@@ -254,10 +269,45 @@ final class AuthService: ObservableObject {
         GIDSignIn.sharedInstance.signOut()
         currentUser = nil
         AppState.shared.updateUser(nil)
+        AppState.shared.resetOnboardingState()
         NotificationService.shared.cancelAllNotifications()
 
         Task {
             await SubscriptionService.shared.logoutUser()
+        }
+    }
+
+    // MARK: - Onboarding
+    func completeOnboardingInFirestore() async {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        let userRef = db.collection("users").document(userId)
+        try? await userRef.setData(["hasCompletedOnboarding": true], merge: true)
+    }
+
+    private func seedTutorialReminders(userId: String) async {
+        let remindersRef = db.collection("users").document(userId).collection("reminders")
+        let now = Date()
+
+        let tutorialReminders: [(String, TimeInterval)] = [
+            ("Welcome to Yomo! Swipe right on me to mark as complete", 0),
+            ("Try swiping left on this reminder to delete it", 5 * 60),
+            ("Tap the + button to create your own reminder", 60 * 60),
+            ("Hold the mic button to speak your reminder naturally", 3 * 60 * 60),
+            ("Tap the gear icon to explore themes and settings", 24 * 60 * 60)
+        ]
+
+        for (title, offset) in tutorialReminders {
+            let triggerDate = now.addingTimeInterval(offset)
+            let data: [String: Any] = [
+                "title": title,
+                "notes": "",
+                "triggerDate": Timestamp(date: triggerDate),
+                "recurrence": ["type": "none"],
+                "status": "active",
+                "createdAt": Timestamp(date: now),
+                "updatedAt": Timestamp(date: now)
+            ]
+            try? await remindersRef.addDocument(data: data)
         }
     }
 }

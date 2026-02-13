@@ -15,6 +15,9 @@ struct PaywallView: View {
     @State private var isRestoring = false
     @State private var appeared = false
 
+    var isOnboarding: Bool = false
+    var onDismissAction: (() -> Void)?
+
     private let monthlyFallbackPrice = "US$4.99"
     private let annualFallbackPrice = "US$39.99"
     private let annualBadgeText = "Best Value"
@@ -22,6 +25,14 @@ struct PaywallView: View {
     enum PlanType {
         case monthly
         case annual
+    }
+
+    private func performDismiss() {
+        if let action = onDismissAction {
+            action()
+        } else {
+            dismiss()
+        }
     }
 
     var body: some View {
@@ -42,17 +53,27 @@ struct PaywallView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.textTertiary)
-                            .font(.system(size: 24))
+                    if isOnboarding {
+                        Button {
+                            performDismiss()
+                        } label: {
+                            Text("Maybe Later")
+                                .font(.bodyRegular)
+                                .foregroundColor(.textSecondary)
+                        }
+                    } else {
+                        Button {
+                            performDismiss()
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.textTertiary)
+                                .font(.system(size: 24))
+                        }
                     }
                 }
             }
         }
-        .presentationDetents([.large])
+        .presentationDetents(isOnboarding ? [] : [.large])
         .task {
             await subscriptionService.fetchOfferings()
         }
@@ -301,7 +322,7 @@ struct PaywallView: View {
             let success = await subscriptionService.purchase(package: pkg)
             if success {
                 HapticManager.success()
-                dismiss()
+                performDismiss()
             }
         }
     }
@@ -313,7 +334,7 @@ struct PaywallView: View {
             isRestoring = false
             if success {
                 HapticManager.success()
-                dismiss()
+                performDismiss()
             }
         }
     }

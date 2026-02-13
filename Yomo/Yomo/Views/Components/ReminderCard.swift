@@ -20,12 +20,20 @@ struct ReminderCard: View {
 
     private var timeText: String {
         let formatter = DateFormatter()
-        if reminder.isOverdue && !Calendar.current.isDateInToday(reminder.displayDate) {
-            formatter.dateFormat = "EEEE"
-            return formatter.string(from: reminder.displayDate)
+        let calendar = Calendar.current
+        let date = reminder.displayDate
+
+        if reminder.isOverdue && !calendar.isDateInToday(date) {
+            formatter.dateFormat = "M/d h:mm a"
+            return formatter.string(from: date)
         }
-        formatter.dateFormat = "h:mm a"
-        return formatter.string(from: reminder.displayDate)
+
+        if calendar.isDateInToday(date) {
+            formatter.dateFormat = "h:mm a"
+        } else {
+            formatter.dateFormat = "M/d h:mm a"
+        }
+        return formatter.string(from: date)
     }
 
     private var isOverdueRecurring: Bool {
